@@ -17,11 +17,11 @@ namespace TheOtherRoles.Patches {
             Dictionary<byte, PlayerControl> playersById = Helpers.allPlayersById();
 
             foreach (PlayerControl player in PlayerControl.AllPlayerControls) {
-                player.nameText.text = Helpers.hidePlayerName(PlayerControl.LocalPlayer, player) ? "" : player.CurrentOutfit.PlayerName;
+                player.cosmetics.nameText.text = Helpers.hidePlayerName(PlayerControl.LocalPlayer, player) ? "" : player.CurrentOutfit.PlayerName;
                 if (PlayerControl.LocalPlayer.isImpostor() && player.isImpostor()) {
-                    player.nameText.color = Palette.ImpostorRed;
+                    player.cosmetics.nameText.color = Palette.ImpostorRed;
                 } else {
-                    player.nameText.color = Color.white;
+                    player.cosmetics.nameText.color = Color.white;
                 }
             }
 
@@ -42,7 +42,7 @@ namespace TheOtherRoles.Patches {
             if (PlayerControl.LocalPlayer.isImpostor()) {
                 List<PlayerControl> impostors = PlayerControl.AllPlayerControls.ToArray().Where(x => x.isImpostor()).ToList();
                 foreach (PlayerControl player in impostors)
-                    player.nameText.color = Palette.ImpostorRed;
+                    player.cosmetics.nameText.color = Palette.ImpostorRed;
                 if (MeetingHud.Instance != null)
                     foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates) {
                         PlayerControl playerControl = Helpers.playerById((byte)player.TargetPlayerId);
@@ -54,7 +54,7 @@ namespace TheOtherRoles.Patches {
         }
 
         static void setPlayerNameColor(PlayerControl p, Color color) {
-            p.nameText.color = color;
+            p.cosmetics.nameText.color = color;
             if (MeetingHud.Instance != null)
                 foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
                     if (player.NameText != null && p.PlayerId == player.TargetPlayerId)
@@ -227,13 +227,13 @@ namespace TheOtherRoles.Patches {
             if (PlayerControl.LocalPlayer != null && PlayerControl.LocalPlayer.Data.Role.IsImpostor) {
                 foreach (PlayerControl player in PlayerControl.AllPlayerControls)
                 {
-                    if (player.nameText.text == "") continue;
+                    if (player.cosmetics.nameText.text == "") continue;
                     if (Godfather.godfather != null && Godfather.godfather == player)
-                        player.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaG")})";
+                        player.cosmetics.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaG")})";
                     else if (Mafioso.mafioso != null && Mafioso.mafioso == player)
-                        player.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaM")})";
+                        player.cosmetics.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaM")})";
                     else if (Janitor.janitor != null && Janitor.janitor == player)
-                        player.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaJ")})";
+                        player.cosmetics.nameText.text = player.Data.PlayerName + $" ({ModTranslation.getString("mafiaJ")})";
                 }
                 if (MeetingHud.Instance != null)
                     foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
@@ -251,9 +251,9 @@ namespace TheOtherRoles.Patches {
                 var lover1 = PlayerControl.LocalPlayer;
                 var lover2 = PlayerControl.LocalPlayer.getPartner();
 
-                lover1.nameText.text += suffix;
+                lover1.cosmetics.nameText.text += suffix;
                 if (!Helpers.hidePlayerName(lover2))
-                    lover2.nameText.text += suffix;
+                    lover2.cosmetics.nameText.text += suffix;
 
                 if (Helpers.ShowMeetingText)
                     foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
@@ -269,14 +269,14 @@ namespace TheOtherRoles.Patches {
                     string suffix = Helpers.cs(akujo.iconColor, " ♥");
                     if (PlayerControl.LocalPlayer == akujo.player)
                     {
-                        PlayerControl.LocalPlayer.nameText.text += suffix;
+                        PlayerControl.LocalPlayer.cosmetics.nameText.text += suffix;
                         if (akujo.honmei != null && !Helpers.hidePlayerName(akujo.honmei.player))
-                            akujo.honmei.player.nameText.text += suffix;
+                            akujo.honmei.player.cosmetics.nameText.text += suffix;
 
                         foreach (var keep in akujo.keeps)
                         {
                             if (!Helpers.hidePlayerName(keep.player))
-                                keep.player.nameText.text += suffix;
+                                keep.player.cosmetics.nameText.text += suffix;
                         }
 
                         if (Helpers.ShowMeetingText)
@@ -293,9 +293,9 @@ namespace TheOtherRoles.Patches {
 
                     else if (PlayerControl.LocalPlayer == akujo.honmei?.player || akujo.keeps.Any(x => PlayerControl.LocalPlayer == x?.player))
                     {
-                        PlayerControl.LocalPlayer.nameText.text += suffix;
+                        PlayerControl.LocalPlayer.cosmetics.nameText.text += suffix;
                         if (!Helpers.hidePlayerName(akujo.player))
-                            akujo.player.nameText.text += suffix;
+                            akujo.player.cosmetics.nameText.text += suffix;
 
                         if (Helpers.ShowMeetingText)
                         {
@@ -314,8 +314,8 @@ namespace TheOtherRoles.Patches {
                 foreach (var couple in Lovers.couples)
                 {
                     string suffix = Lovers.getIcon(couple.lover1);
-                    couple.lover1.nameText.text += suffix;
-                    couple.lover2.nameText.text += suffix;
+                    couple.lover1.cosmetics.nameText.text += suffix;
+                    couple.lover2.cosmetics.nameText.text += suffix;
 
                     if (Helpers.ShowMeetingText)
                         foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
@@ -326,11 +326,11 @@ namespace TheOtherRoles.Patches {
                 foreach (var akujo in Akujo.players)
                 {
                     string suffix = Helpers.cs(akujo.iconColor, " ♥");
-                    akujo.player.nameText.text += suffix;
+                    akujo.player.cosmetics.nameText.text += suffix;
                     if (akujo.honmei != null)
-                        akujo.honmei.player.nameText.text += suffix;
+                        akujo.honmei.player.cosmetics.nameText.text += suffix;
                     foreach (var keep in akujo.keeps)
-                        keep.player.nameText.text += suffix;
+                        keep.player.cosmetics.nameText.text += suffix;
 
                     if (Helpers.ShowMeetingText)
                     {
@@ -351,7 +351,7 @@ namespace TheOtherRoles.Patches {
             if (localIsLawyer || (localIsKnowingTarget && !Lawyer.lawyer.Data.IsDead)) {
                 string suffix = Helpers.cs(Lawyer.color, " §");
                 if (!Helpers.hidePlayerName(Lawyer.target))
-                    Lawyer.target.nameText.text += suffix;
+                    Lawyer.target.cosmetics.nameText.text += suffix;
 
                 if (Helpers.ShowMeetingText)
                     foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
@@ -394,7 +394,7 @@ namespace TheOtherRoles.Patches {
                 suffix = " <color=#FAD934FF>(" + Mathf.FloorToInt(growingProgress * 18) + ")</color>"; 
 
             if (!Helpers.hidePlayerName(Mini.mini))
-                Mini.mini.nameText.text += suffix;
+                Mini.mini.cosmetics.nameText.text += suffix;
 
             if (MeetingHud.Instance != null) {
                 foreach (PlayerVoteArea player in MeetingHud.Instance.playerStates)
@@ -403,7 +403,7 @@ namespace TheOtherRoles.Patches {
             }
 
             if (Morphling.morphling != null && Morphling.morphTarget == Mini.mini && Morphling.morphTimer > 0f && !Helpers.hidePlayerName(Morphling.morphling))
-                Morphling.morphling.nameText.text += suffix;
+                Morphling.morphling.cosmetics.nameText.text += suffix;
         }
 
         static void updateImpostorKillButton(HudManager __instance) {

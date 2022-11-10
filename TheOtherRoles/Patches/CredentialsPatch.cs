@@ -1,19 +1,24 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using TheOtherRoles.Utilities;
 using UnityEngine;
 
 namespace TheOtherRoles.Patches {
     [HarmonyPatch]
     public static class CredentialsPatch {
+        public static string fullCredentials = 
+$@"<size=130%><color=#ff351f>TheOtherRoles GM T</color></size> v{TheOtherRolesPlugin.Version.ToString()}
+<size=60%>作者:<color=#FCCE03FF>Eisbison</color>, <color=#FCCE03FF>EndOfFile</color>
+<color=#FCCE03FF>Thunderstorm584</color> & <color=#FCCE03FF>Mallöris</color>
+Design by <color=#FCCE03FF>Bavari</color>修改者:<color=#FCCE03FF>MC-AS-Huier</color></size>
+";
 
-        public static string baseCredentials = $@"<size=130%><color=#ff351f>TheOtherRoles GM</color></size> v{TheOtherRolesPlugin.Version.ToString()}";
+    public static string mainMenuCredentials = 
+$@"Modded by <color=#FCCE03FF>Eisbison</color>, <color=#FCCE03FF>Thunderstorm584</color>, <color=#FCCE03FF>EndOfFile</color> & <color=#FCCE03FF>Mallöris</color>
+Design by <color=#FCCE03FF>Bavari</color>";
 
-
-        public static string contributorsCredentials = "<size=80%>GitHub Contributors: Alex2911, amsyarasyiq, gendelo3</size>";
+        public static string contributorsCredentials =
+$@"<size=60%> <color=#FCCE03FF>Special thanks to K3ndo & Smeggy</color></size>";
 
         [HarmonyPatch(typeof(VersionShower), nameof(VersionShower.Start))]
         private static class VersionShowerPatch
@@ -23,45 +28,56 @@ namespace TheOtherRoles.Patches {
                 if (amongUsLogo == null) return;
 
                 var credentials = UnityEngine.Object.Instantiate<TMPro.TextMeshPro>(__instance.text);
-                credentials.transform.position = new Vector3(0, 0.15f, 0);
-                credentials.SetText(ModTranslation.getString("creditsMain"));
+                credentials.transform.position = new Vector3(0, 0, 0);
+                credentials.SetText($"v{TheOtherRolesPlugin.Version.ToString()}\n<size=30f%>\n</size>{mainMenuCredentials}\n<size=30%>\n</size>{contributorsCredentials}");
                 credentials.alignment = TMPro.TextAlignmentOptions.Center;
                 credentials.fontSize *= 0.75f;
 
-                var version = UnityEngine.Object.Instantiate<TMPro.TextMeshPro>(credentials);
-                version.transform.position = new Vector3(0, -0.25f, 0);
-                version.SetText(string.Format(ModTranslation.getString("creditsVersion"), TheOtherRolesPlugin.Version.ToString()));
-
                 credentials.transform.SetParent(amongUsLogo.transform);
-                version.transform.SetParent(amongUsLogo.transform);
             }
         }
 
         [HarmonyPatch(typeof(PingTracker), nameof(PingTracker.Update))]
-        private static class PingTrackerPatch
+        internal static class PingTrackerPatch
         {
+            public static GameObject modStamp;
+            static void Prefix(PingTracker __instance) {
+                if (modStamp == null) {
+                    modStamp = new GameObject("ModStamp");
+                    var rend = modStamp.AddComponent<SpriteRenderer>();
+                    rend.sprite = TheOtherRolesPlugin.GetModStamp();
+                    rend.color = new Color(1, 1, 1, 0.5f);
+                    modStamp.transform.parent = __instance.transform.parent;
+                    modStamp.transform.localScale *= SubmergedCompatibility.Loaded ? 0 : 0.6f;
+                }
+                float offset = (AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started) ? 0.75f : 0f;
+                modStamp.transform.position = FastDestroyableSingleton<HudManager>.Instance.MapButton.transform.position + Vector3.down * offset;
+            }
+
             static void Postfix(PingTracker __instance){
                 __instance.text.alignment = TMPro.TextAlignmentOptions.TopRight;
                 if (AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started) {
-                    __instance.text.text = $"{baseCredentials}\n{__instance.text.text}";
-                    if (PlayerControl.LocalPlayer.Data.IsDead || (!(PlayerControl.LocalPlayer == null) && PlayerControl.LocalPlayer.isLovers())) {
+                    __instance.text.text = $"<size=130%><color=#ff351f>TheOtherRoles</color></size> v{TheOtherRolesPlugin.Version.ToString()}\n" + __instance.text.text;
+                    if (CachedPlayer.LocalPlayer.Data.IsDead || (!(CachedPlayer.LocalPlayer.PlayerControl == null))) {
                         __instance.transform.localPosition = new Vector3(3.45f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
                     } else {
                         __instance.transform.localPosition = new Vector3(4.2f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
                     }
                 } else {
-                    __instance.text.text = $"{baseCredentials}\n{ModTranslation.getString("creditsFull")}\n{__instance.text.text}";
+                    __instance.text.text = $"{fullCredentials}\n{__instance.text.text}";
                     __instance.transform.localPosition = new Vector3(3.5f, __instance.transform.localPosition.y, __instance.transform.localPosition.z);
                 }
             }
         }
 
         [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start))]
-        private static class LogoPatch
+        public static class LogoPatch
         {
-            static void Postfix(MainMenuManager __instance) {
-                DestroyableSingleton<ModManager>.Instance.ShowModStamp();
-
+            public static SpriteRenderer renderer;
+            public static Sprite bannerSprite;
+            public static Sprite horseBannerSprite;
+            private static PingTracker instance;
+            static void Postfix(PingTracker __instance) {
                 var amongUsLogo = GameObject.Find("bannerLogo_AmongUs");
                 if (amongUsLogo != null) {
                     amongUsLogo.transform.localScale *= 0.6f;
@@ -70,8 +86,32 @@ namespace TheOtherRoles.Patches {
 
                 var torLogo = new GameObject("bannerLogo_TOR");
                 torLogo.transform.position = Vector3.up;
-                var renderer = torLogo.AddComponent<SpriteRenderer>();
+                renderer = torLogo.AddComponent<SpriteRenderer>();
+                loadSprites();
                 renderer.sprite = Helpers.loadSpriteFromResources("TheOtherRoles.Resources.Banner.png", 300f);
+
+                instance = __instance;
+                loadSprites();
+            }
+
+            public static void loadSprites() {
+                if (bannerSprite == null) bannerSprite = Helpers.loadSpriteFromResources("TheOtherRoles.Resources.Banner.png", 300f);
+                if (horseBannerSprite == null) horseBannerSprite = Helpers.loadSpriteFromResources("TheOtherRoles.Resources.bannerTheHorseRoles.png", 300f);
+            }
+
+            public static void updateSprite() {
+                loadSprites();
+                if (renderer != null) {
+                    float fadeDuration = 1f;
+                    instance.StartCoroutine(Effects.Lerp(fadeDuration, new Action<float>((p) => {
+                        renderer.color = new Color(1, 1, 1, 1 - p);
+                        if (p == 1) {
+                            instance.StartCoroutine(Effects.Lerp(fadeDuration, new Action<float>((p) => {
+                                renderer.color = new Color(1, 1, 1, p);
+                            })));
+                        }
+                    })));
+                }
             }
         }
     }

@@ -2,16 +2,14 @@ using HarmonyLib;
 using Hazel;
 using System.Collections.Generic;
 using System.Linq;
-using UnhollowerBaseLib;
 using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
 using static TheOtherRoles.MapOptions;
 using static TheOtherRoles.GameHistory;
-using System.Collections;
+using TheOtherRoles.Utilities;
 using System;
-using System.Text;
 using UnityEngine;
-using System.Reflection;
+
 
 namespace TheOtherRoles.Patches {
     [HarmonyPatch]
@@ -188,10 +186,9 @@ namespace TheOtherRoles.Patches {
         class MeetingHudBloopAVoteIconPatch {
             public static bool Prefix(MeetingHud __instance, [HarmonyArgument(0)]GameData.PlayerInfo voterPlayer, [HarmonyArgument(1)]int index, [HarmonyArgument(2)]Transform parent) {
                 SpriteRenderer spriteRenderer = UnityEngine.Object.Instantiate<SpriteRenderer>(__instance.PlayerVotePrefab);
-                if (!PlayerControl.GameOptions.AnonymousVotes || (PlayerControl.LocalPlayer.Data.IsDead && MapOptions.ghostsSeeVotes) || PlayerControl.LocalPlayer.isRole(RoleType.Watcher))
-                    PlayerControl.SetPlayerMaterialColors(voterPlayer.DefaultOutfit.ColorId, spriteRenderer);
-                else
-                    PlayerControl.SetPlayerMaterialColors(Palette.DisabledGrey, spriteRenderer);
+                if (!(!PlayerControl.GameOptions.AnonymousVotes || (CachedPlayer.LocalPlayer.PlayerControl.Data.IsDead && MapOptions.ghostsSeeVotes)))
+                    voterPlayer.Object.SetColor(6);
+                voterPlayer.Object.SetPlayerMaterialColors(spriteRenderer);
                 spriteRenderer.transform.SetParent(parent);
                 spriteRenderer.transform.localScale = Vector3.zero;
                 __instance.StartCoroutine(Effects.Bloop((float)index * 0.3f, spriteRenderer.transform, 1f, 0.5f));
@@ -653,7 +650,7 @@ namespace TheOtherRoles.Patches {
             }
         }
 
-        [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CoStartMeeting))]
+        [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.StartMeeting))]
         class StartMeetingPatch {
             public static void Prefix(PlayerControl __instance, [HarmonyArgument(0)]GameData.PlayerInfo meetingTarget)
             {

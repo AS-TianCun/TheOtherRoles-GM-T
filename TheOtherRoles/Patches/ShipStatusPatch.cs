@@ -1,3 +1,5 @@
+using System;
+using TheOtherRoles.Utilities;
 using HarmonyLib;
 using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Collections;
-using UnhollowerBaseLib;
 using UnityEngine;
 using System.Linq;
 using static TheOtherRoles.TheOtherRoles;
@@ -13,6 +11,7 @@ using TheOtherRoles.Modules;
 using HarmonyLib;
 using Hazel;
 using TheOtherRoles.Patches;
+using TheOtherRoles.Utilities;
 
 namespace TheOtherRoles {
 
@@ -140,7 +139,7 @@ namespace TheOtherRoles {
         {
             SkinViewData nextSkin = HatManager.Instance.GetSkinById(SkinId).viewData.viewData;
             AnimationClip clip = null;
-            var spriteAnim = playerPhysics.Skin.animator;
+            var spriteAnim = playerPhysics.myPlayer.cosmetics.skin.animator;
             var anim = spriteAnim.m_animator;
 
             var currentPhysicsAnim = playerPhysics.Animator.GetCurrentAnimation();
@@ -326,6 +325,11 @@ namespace TheOtherRoles {
                     (player.isRole(RoleType.Shifter) && Shifter.isNeutral)));
         }
 
+        public static object TryCast(this Il2CppObjectBase self, Type type)
+        {
+            return AccessTools.Method(self.GetType(), nameof(Il2CppObjectBase.TryCast)).MakeGenericMethod(type).Invoke(self, Array.Empty<object>());
+        }
+
         public static bool isCrew(this PlayerControl player)
         {
             return player != null && !player.isImpostor() && !player.isNeutral() && !player.isGM();
@@ -409,7 +413,7 @@ namespace TheOtherRoles {
             float alpha = value ? 0.25f : 1f;
             foreach (SpriteRenderer r in player.gameObject.GetComponentsInChildren<SpriteRenderer>())
                 r.color = new Color(r.color.r, r.color.g, r.color.b, alpha);
-            player.NameText.color = new Color(player.NameText.color.r, player.NameText.color.g, player.NameText.color.b, alpha);
+            player.cosmetics.nameText.color = new Color(player.cosmetics.nameText.color.r, player.cosmetics.nameText.color.g, player.cosmetics.nameText.color.b, alpha);
         }
 
         public static string GetString(this TranslationController t, StringNames key, params Il2CppSystem.Object[] parts) {
@@ -478,14 +482,14 @@ namespace TheOtherRoles {
 
         public static void setLook(this PlayerControl target, String playerName, int colorId, string hatId, string visorId, string skinId, string petId) {
             target.RawSetColor(colorId);
-            target.RawSetVisor(visorId);
+            target.RawSetVisor(visorId,colorId);
             target.RawSetHat(hatId, colorId);
             target.RawSetName(hidePlayerName(PlayerControl.LocalPlayer, target) ? "" : playerName);
 
             SkinViewData nextSkin = DestroyableSingleton<HatManager>.Instance.GetSkinById(skinId).viewData.viewData;
             PlayerPhysics playerPhysics = target.MyPhysics;
             AnimationClip clip = null;
-            var spriteAnim = playerPhysics.Skin.animator;
+            var spriteAnim = playerPhysics.myPlayer.cosmetics.skin.animator;
             var currentPhysicsAnim = playerPhysics.Animator.GetCurrentAnimation();
             if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.RunAnim) clip = nextSkin.RunAnim;
             else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.SpawnAnim) clip = nextSkin.SpawnAnim;
@@ -494,17 +498,17 @@ namespace TheOtherRoles {
             else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.IdleAnim) clip = nextSkin.IdleAnim;
             else clip = nextSkin.IdleAnim;
             float progress = playerPhysics.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
-            playerPhysics.Skin.skin = nextSkin;
+            playerPhysics.myPlayer.cosmetics.skin.skin = nextSkin;
             spriteAnim.Play(clip, 1f);
             spriteAnim.m_animator.Play("a", 0, progress % 1);
             spriteAnim.m_animator.Update(0f);
 
-            if (target.CurrentPet) UnityEngine.Object.Destroy(target.CurrentPet.gameObject);
-            target.CurrentPet = UnityEngine.Object.Instantiate<PetBehaviour>(DestroyableSingleton<HatManager>.Instance.GetPetById(petId).viewData.viewData);
-            target.CurrentPet.transform.position = target.transform.position;
-            target.CurrentPet.Source = target;
-            target.CurrentPet.Visible = target.Visible;
-            PlayerControl.SetPlayerMaterialColors(colorId, target.CurrentPet.rend);
+            if (target.cosmetics.currentPet) UnityEngine.Object.Destroy(target.cosmetics.currentPet.gameObject);
+            target.cosmetics.currentPet = UnityEngine.Object.Instantiate<PetBehaviour>(DestroyableSingleton<HatManager>.Instance.GetPetById(petId).viewData.viewData);
+            target.cosmetics.currentPet.transform.position = target.transform.position;
+            target.cosmetics.currentPet.Source = target;
+            target.cosmetics.currentPet.Visible = target.Visible;
+            target.SetPlayerMaterialColors(target.cosmetics.currentPet.rend);
         }
 
         public static void showFlash(Color color, float duration = 1f)
@@ -673,6 +677,11 @@ namespace TheOtherRoles {
                 self[i] = self[index];
                 self[index] = value;
             }
+        }
+
+        internal static PlayerControl getPlayerById(byte id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

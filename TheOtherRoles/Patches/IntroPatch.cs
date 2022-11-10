@@ -5,6 +5,7 @@ using static TheOtherRoles.TheOtherRolesGM;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using TheOtherRoles.Utilities;
 
 namespace TheOtherRoles.Patches {
     [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
@@ -18,10 +19,10 @@ namespace TheOtherRoles.Patches {
                 foreach (PlayerControl p in PlayerControl.AllPlayerControls) {
                     GameData.PlayerInfo data = p.Data;
                     PoolablePlayer player = UnityEngine.Object.Instantiate<PoolablePlayer>(__instance.PlayerPrefab, HudManager.Instance.transform);
-                    player.UpdateFromPlayerOutfit(p.Data.DefaultOutfit, p.Data.IsDead);
+                    player.UpdateFromPlayerOutfit(p.Data.DefaultOutfit, PlayerMaterial.MaskType.ComplexUI,p.Data.IsDead,true);
                     player.SetFlipX(true);
-                    player.PetSlot.gameObject.SetActive(false);
-                    player.NameText.text = p.Data.DefaultOutfit.PlayerName;
+                  //player.PetSlot.gameObject.SetActive(false);
+                    player.cosmetics.nameText.text = p.Data.DefaultOutfit.PlayerName;
                     MapOptions.playerIcons[p.PlayerId] = player;
 
                     if (PlayerControl.LocalPlayer == BountyHunter.bountyHunter)

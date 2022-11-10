@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using TheOtherRoles.Patches;
 using UnityEngine;
+using AmongUs.Data.Legacy;
 
 namespace TheOtherRoles
 {
@@ -78,7 +79,7 @@ namespace TheOtherRoles
             }
 
             var data = stringData[keyClean];
-            int lang = (int)SaveManager.LastLanguage;
+            int lang = (int)LegacySaveManager.LastLanguage;
 
             if (data.ContainsKey(lang))
             {

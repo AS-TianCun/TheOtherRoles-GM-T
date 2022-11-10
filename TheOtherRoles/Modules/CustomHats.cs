@@ -1,26 +1,18 @@
-using System;
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.IL2CPP;
-using Il2CppSystem;
 using HarmonyLib;
 using UnityEngine;
-using UnhollowerBaseLib;
 using System.IO;
-using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-
+using TheOtherRoles.Utilities;
+using System.Reflection;
+using AmongUs.Data;
+using AmongUs.Data.Legacy;
 
 namespace TheOtherRoles.Modules {
 
@@ -133,8 +125,7 @@ namespace TheOtherRoles.Modules {
         {
             if (altHatShader == null)
             {
-                Material tmpShader = new Material("PlayerMaterial");
-                tmpShader.shader = Shader.Find("Unlit/PlayerShader");
+                Material tmpShader = FastDestroyableSingleton<HatManager>.Instance.PlayerMaterial;
                 altHatShader = tmpShader;
             }
 
@@ -195,12 +186,15 @@ namespace TheOtherRoles.Modules {
 
         [HarmonyPatch(typeof(HatManager), nameof(HatManager.GetHatById))]
         private static class HatManagerPatch {
+            private static List<HatData> allHatsList;
             private static bool LOADED;
             private static bool RUNNING;
 
             static void Prefix(HatManager __instance) {
                 if (RUNNING) return;
                 RUNNING = true; // prevent simultanious execution
+                allHatsList = __instance.allHats.ToList();
+
 
                 try {
                     if (!LOADED) {
@@ -212,15 +206,16 @@ namespace TheOtherRoles.Modules {
 
                         List<CustomHat> customhats = createCustomHatDetails(hats);
                         foreach (CustomHat ch in customhats)
-                            __instance.allHats.Add(CreateHatBehaviour(ch));
+                            allHatsList.Add(CreateHatBehaviour(ch));
                     }
 
                     // If we have any asynchronously loaded hats, add them here.
                     while (CustomHatLoader.hatDetails.Count > 0)
                     {
-                        __instance.allHats.Add(CreateHatBehaviour(CustomHatLoader.hatDetails[0]));
+                        allHatsList.Add(CreateHatBehaviour(CustomHatLoader.hatDetails[0]));
                         CustomHatLoader.hatDetails.RemoveAt(0);
                     }
+                    __instance.allHats = allHatsList.ToArray();
                 } catch (System.Exception e) {
                     if (!LOADED)
                         Helpers.log("Unable to add Custom Hats\n" + e);
@@ -241,6 +236,8 @@ namespace TheOtherRoles.Modules {
                 if (DestroyableSingleton<TutorialManager>.InstanceExists)
                 {
                     string filePath = Path.GetDirectoryName(Application.dataPath) + @"\TheOtherHats\Test";
+                    if (!Directory.Exists(filePath))
+                        Directory.CreateDirectory(filePath);
                     DirectoryInfo d = new DirectoryInfo(filePath);
                     string[] filePaths = d.GetFiles("*.png").Select(x => x.FullName).ToArray(); // Getting Text files
                     List<CustomHat> hats = createCustomHatDetails(filePaths, true);
@@ -250,8 +247,8 @@ namespace TheOtherRoles.Modules {
                         {
                             var color = pc.CurrentOutfit.ColorId;
                             pc.SetHat("hat_dusk", color);
-                            pc.HatRenderer.Hat = CreateHatBehaviour(hats[0], true, true);
-                            pc.HatRenderer.SetHat(color);
+                            pc.cosmetics.hat.Hat = CreateHatBehaviour(hats[0], true, true);
+                            pc.cosmetics.hat.SetHat(color);
                         }
                     }
                 }
@@ -307,17 +304,17 @@ namespace TheOtherRoles.Modules {
                     float ypos = offset - (i / __instance.NumPerRow) * __instance.YOffset;
                     ColorChip colorChip = UnityEngine.Object.Instantiate<ColorChip>(__instance.ColorTabPrefab, __instance.scroller.Inner);
 
-                    int color = __instance.HasLocalPlayer() ? PlayerControl.LocalPlayer.Data.DefaultOutfit.ColorId : SaveManager.BodyColor;
+                    int color = __instance.HasLocalPlayer() ? PlayerControl.LocalPlayer.Data.DefaultOutfit.ColorId : DataManager.Player.Customization.Color;
 
                     colorChip.transform.localPosition = new Vector3(xpos, ypos, inventoryZ);
                     if (ActiveInputManager.currentControlType == ActiveInputManager.InputType.Keyboard)
                     {
-                        colorChip.Button.OnMouseOver.AddListener((UnityEngine.Events.UnityAction)(() => __instance.SelectHat(hat)));
-                        colorChip.Button.OnMouseOut.AddListener((UnityEngine.Events.UnityAction)(() => __instance.SelectHat(DestroyableSingleton<HatManager>.Instance.GetHatById(SaveManager.LastHat))));
-                        colorChip.Button.OnClick.AddListener((UnityEngine.Events.UnityAction)(() => __instance.ClickEquip()));
+                        colorChip.Button.OnMouseOver.AddListener((System.Action)(() => __instance.SelectHat(hat)));
+                        colorChip.Button.OnMouseOut.AddListener((System.Action)(() => __instance.SelectHat(FastDestroyableSingleton<HatManager>.Instance.GetHatById(DataManager.Player.Customization.Hat))));
+                        colorChip.Button.OnClick.AddListener((System.Action)(() => __instance.ClickEquip()));
                     } else
                     {
-                        colorChip.Button.OnClick.AddListener((UnityEngine.Events.UnityAction)(() => __instance.SelectHat(hat)));
+                        colorChip.Button.OnClick.AddListener((System.Action)(() => __instance.SelectHat(hat)));
                     }
 
                     colorChip.Inner.SetHat(hat, color);
@@ -334,7 +331,7 @@ namespace TheOtherRoles.Modules {
             {
                 calcItemBounds(__instance);
 
-                HatData[] unlockedHats = DestroyableSingleton<HatManager>.Instance.GetUnlockedHats();
+                HatData[] unlockedHats = FastDestroyableSingleton<HatManager>.Instance.GetUnlockedHats();
                 Dictionary<string, List<System.Tuple<HatData, HatExtension>>> packages = new Dictionary<string, List<System.Tuple<HatData, HatExtension>>>();
 
                 Helpers.destroyList(hatsTabCustomTexts);
@@ -510,6 +507,7 @@ namespace TheOtherRoles.Modules {
                 List<string> markedfordownload = new List<string>();
 
                 string filePath = Path.GetDirectoryName(Application.dataPath) + @"\TheOtherHats\";
+                if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
                 MD5 md5 = MD5.Create();
                 foreach (CustomHatOnline data in hatdatas) {
     	            if (doesResourceRequireDownload(filePath + data.resource, data.reshasha, md5))
@@ -572,7 +570,7 @@ namespace TheOtherRoles.Modules {
         }
     }
 
-    [HarmonyPatch(typeof(PoolablePlayer), nameof(PoolablePlayer.UpdateFromPlayerOutfit))]
+    /*[HarmonyPatch(typeof(PoolablePlayer), nameof(PoolablePlayer.UpdateFromPlayerOutfit))]
     public static class PoolablePlayerPatch
     {
         public static void Postfix(PoolablePlayer __instance, GameData.PlayerOutfit outfit)
@@ -588,4 +586,5 @@ namespace TheOtherRoles.Modules {
                 );
         }
     }
+    */
 }

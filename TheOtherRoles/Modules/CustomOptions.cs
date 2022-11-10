@@ -858,7 +858,7 @@ namespace TheOtherRoles
         }
     }
 
-    [HarmonyPatch(typeof(SaveManager), "GameHostOptions", MethodType.Getter)]
+    /*  [HarmonyPatch(typeof(SaveManager), "GameHostOptions", MethodType.Getter)]
     public static class SaveManagerGameHostOptionsPatch
     {
         private static int numImpostors;
@@ -877,7 +877,7 @@ namespace TheOtherRoles
             __result.NumImpostors = numImpostors;
         }
     }
-
+    */
     [HarmonyPatch(typeof(KeyboardJoystick), nameof(KeyboardJoystick.Update))]
     public static class GameOptionsNextPagePatch
     {

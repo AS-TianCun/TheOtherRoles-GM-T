@@ -1,28 +1,29 @@
-﻿using BepInEx;
+﻿global using UnhollowerBaseLib;
+global using UnhollowerBaseLib.Attributes;
+global using UnhollowerRuntimeLib;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.IL2CPP;
 using HarmonyLib;
 using Hazel;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Linq;
-using System.Net;
-using System.IO;
 using System;
-using System.Reflection;
-using UnhollowerBaseLib;
 using UnityEngine;
 using TheOtherRoles.Modules;
+using TheOtherRoles.Utilities;
+using AmongUs.Data.Legacy;
 
 namespace TheOtherRoles
 {
-    [BepInPlugin(Id, "The Other Roles GM", VersionString)]
+    [BepInPlugin(Id, "The Other Roles GM T", VersionString)]
+    [BepInDependency(SubmergedCompatibility.SUBMERGED_GUID, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInProcess("Among Us.exe")]
     public class TheOtherRolesPlugin : BasePlugin
     {
         public const string Id = "me.eisbison.theotherroles";
-        public const string VersionString = "2022.4.15";
-        public static System.Version Version = System.Version.Parse(VersionString);
+        public const string VersionString = "3.6.0-dev1";
+        public static Version Version = System.Version.Parse(VersionString);
         internal static BepInEx.Logging.ManualLogSource Logger;
 
         public Harmony Harmony { get; } = new Harmony(Id);
@@ -50,11 +51,11 @@ namespace TheOtherRoles
 
         public static IRegionInfo[] defaultRegions;
         public static void UpdateRegions() {
-            ServerManager serverManager = DestroyableSingleton<ServerManager>.Instance;
+            ServerManager serverManager = FastDestroyableSingleton<ServerManager>.Instance;
             IRegionInfo[] regions = defaultRegions;
 
             var CustomRegion = new DnsRegionInfo(Ip.Value, "Custom", StringNames.NoTranslation, Ip.Value, Port.Value, false);
-            regions = regions.Concat(new IRegionInfo[] { CustomRegion.Cast<IRegionInfo>() }).ToArray();
+            regions = regions.Concat(new IRegionInfo[] { CustomRegion.CastFast<IRegionInfo>() }).ToArray();
             ServerManager.DefaultRegions = regions;
             serverManager.AvailableRegions = regions;
         }
@@ -114,9 +115,9 @@ namespace TheOtherRoles
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Awake))]
     public static class ChatControllerAwakePatch {
         private static void Prefix() {
-            if (!EOSManager.Instance.IsMinor()) {
-                SaveManager.chatModeType = 1;
-                SaveManager.isGuest = false;
+            if (!EOSManager.Instance.isKWSMinor) {
+                LegacySaveManager.chatModeType = 1;
+                LegacySaveManager.isGuest = false;
             }
         }
     }
@@ -148,14 +149,14 @@ namespace TheOtherRoles
                 int color = random.Next(Palette.PlayerColors.Length);
                 int nameplate = random.Next(HatManager.Instance.allNamePlates.Count);
 
-                playerControl.transform.position = PlayerControl.LocalPlayer.transform.position;
+                playerControl.transform.position = CachedPlayer.LocalPlayer.transform.position;
                 playerControl.GetComponent<DummyBehaviour>().enabled = true;
                 playerControl.NetTransform.enabled = false;
                 playerControl.SetName(RandomString(10));
                 playerControl.SetColor(color);
                 playerControl.SetHat(HatManager.Instance.allHats[hat].ProductId, color);
                 playerControl.SetPet(HatManager.Instance.allPets[pet].ProductId, color);
-                playerControl.SetVisor(HatManager.Instance.allVisors[visor].ProductId);
+                playerControl.SetVisor(HatManager.Instance.allVisors[visor].ProductId,color);
                 playerControl.SetSkin(HatManager.Instance.allSkins[skin].ProductId, color);
                 playerControl.SetNamePlate(HatManager.Instance.allNamePlates[nameplate].ProductId);
                 GameData.Instance.RpcSetTasks(playerControl.PlayerId, new byte[0]);
@@ -163,7 +164,7 @@ namespace TheOtherRoles
 
             // Terminate round
             if(Input.GetKeyDown(KeyCode.L) && AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started) {
-                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.ForceEnd, Hazel.SendOption.Reliable, -1);
+                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(CachedPlayer.LocalPlayer.PlayerControl.NetId, (byte)CustomRPC.ForceEnd, Hazel.SendOption.Reliable, -1);
                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                 RPCProcedure.forceEnd();
             }

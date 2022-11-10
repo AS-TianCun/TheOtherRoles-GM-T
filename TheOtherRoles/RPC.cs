@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System;
+using TheOtherRoles.Utilities;
 
 namespace TheOtherRoles
 {
@@ -245,8 +246,8 @@ namespace TheOtherRoles
             {
                 AmongUsClient.Instance.Dispatcher.Add(new Action(() =>
                 {
-                    ShipStatus.Instance.enabled = false;
-                    ShipStatus.Instance.BeginCalled = false;
+                    MapUtilities.CachedShipStatus.enabled = false;
+                    MapUtilities.CachedShipStatus.ShouldCheckForGameEnd = false;
                     AmongUsClient.Instance.OnGameEnd(new EndGameResult((GameOverReason)reason, false));
 
                     if (AmongUsClient.Instance.AmHost)
@@ -271,7 +272,7 @@ namespace TheOtherRoles
 
         public static void engineerFixLights()
         {
-            SwitchSystem switchSystem = ShipStatus.Instance.Systems[SystemTypes.Electrical].Cast<SwitchSystem>();
+            SwitchSystem switchSystem = MapUtilities.Systems[SystemTypes.Electrical].Cast<SwitchSystem>();
             switchSystem.ActualSwitches = switchSystem.ExpectedSwitches;
         }
 
@@ -321,12 +322,12 @@ namespace TheOtherRoles
             {
                 resetTimeMasterButton();
             }
-            HudManager.Instance.FullScreen.color = new Color(0f, 0.5f, 0.8f, 0.3f);
-            HudManager.Instance.FullScreen.enabled = true;
-            HudManager.Instance.FullScreen.gameObject.SetActive(true);
-            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.rewindTime / 2, new Action<float>((p) =>
+            FastDestroyableSingleton<HudManager>.Instance.FullScreen.color = new Color(0f, 0.5f, 0.8f, 0.3f);
+            FastDestroyableSingleton<HudManager>.Instance.FullScreen.enabled = true;
+            FastDestroyableSingleton<HudManager>.Instance.FullScreen.gameObject.SetActive(true);
+            FastDestroyableSingleton<HudManager>.Instance.StartCoroutine(Effects.Lerp(TimeMaster.rewindTime / 2, new Action<float>((p) =>
             {
-                if (p == 1f) HudManager.Instance.FullScreen.enabled = false;
+                if (p == 1f) FastDestroyableSingleton<HudManager>.Instance.FullScreen.enabled = false;
             })));
 
             if (TimeMaster.timeMaster == null || PlayerControl.LocalPlayer == TimeMaster.timeMaster) return; // Time Master himself does not rewind
@@ -344,7 +345,7 @@ namespace TheOtherRoles
         public static void timeMasterShield()
         {
             TimeMaster.shieldActive = true;
-            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.shieldDuration, new Action<float>((p) =>
+            FastDestroyableSingleton<HudManager>.Instance.StartCoroutine(Effects.Lerp(TimeMaster.shieldDuration, new Action<float>((p) =>
             {
                 if (p == 1f) TimeMaster.shieldActive = false;
             })));
@@ -740,7 +741,7 @@ namespace TheOtherRoles
 
             if (player.PlayerId == PlayerControl.LocalPlayer.PlayerId && client != null)
             {
-                Transform playerInfoTransform = client.nameText.transform.parent.FindChild("Info");
+                Transform playerInfoTransform = client.cosmetics.nameText.transform.parent.FindChild("Info");
                 TMPro.TextMeshPro playerInfo = playerInfoTransform != null ? playerInfoTransform.GetComponent<TMPro.TextMeshPro>() : null;
                 if (playerInfo != null) playerInfo.text = "";
             }
@@ -762,21 +763,21 @@ namespace TheOtherRoles
             if (Constants.ShouldPlaySfx()) SoundManager.Instance.PlaySound(dyingTarget.KillSfx, false, 0.8f);
 
             PlayerControl guesser = Helpers.playerById(killerId);
-            if (HudManager.Instance != null && guesser != null)
+            if (FastDestroyableSingleton<HudManager>.Instance != null && guesser != null)
                 if (PlayerControl.LocalPlayer == dyingTarget)
-                    HudManager.Instance.KillOverlay.ShowKillAnimation(guesser.Data, dyingTarget.Data);
+                    FastDestroyableSingleton<HudManager>.Instance.KillOverlay.ShowKillAnimation(guesser.Data, dyingTarget.Data);
                 else if (dyingLoverPartner != null && PlayerControl.LocalPlayer == dyingLoverPartner)
-                    HudManager.Instance.KillOverlay.ShowKillAnimation(dyingLoverPartner.Data, dyingLoverPartner.Data);
+                    FastDestroyableSingleton<HudManager>.Instance.KillOverlay.ShowKillAnimation(dyingLoverPartner.Data, dyingLoverPartner.Data);
 
             PlayerControl guessedTarget = Helpers.playerById(guessedTargetId);
             if (Guesser.showInfoInGhostChat && PlayerControl.LocalPlayer.Data.IsDead && guessedTarget != null)
             {
                 RoleInfo roleInfo = RoleInfo.allRoleInfos.FirstOrDefault(x => (byte)x.roleType == guessedRoleId);
                 string msg = string.Format(ModTranslation.getString("guesserGuessChat"), roleInfo.name, guessedTarget.Data.PlayerName);
-                if (AmongUsClient.Instance.AmClient && DestroyableSingleton<HudManager>.Instance)
-                    DestroyableSingleton<HudManager>.Instance.Chat.AddChat(guesser, msg);
+                if (AmongUsClient.Instance.AmClient && FastDestroyableSingleton<HudManager>.Instance)
+                    FastDestroyableSingleton<HudManager>.Instance.Chat.AddChat(guesser, msg);
                 if (msg.IndexOf("who", StringComparison.OrdinalIgnoreCase) >= 0)
-                    DestroyableSingleton<Assets.CoreScripts.Telemetry>.Instance.SendWho();
+                    FastDestroyableSingleton<Assets.CoreScripts.Telemetry>.Instance.SendWho();
             }
         }
 

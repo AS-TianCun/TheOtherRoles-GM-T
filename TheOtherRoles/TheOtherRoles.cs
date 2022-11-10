@@ -1,18 +1,12 @@
-﻿using System.Net;
-using System.Linq;
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.IL2CPP;
+﻿using System.Linq;
 using HarmonyLib;
-using Hazel;
 using System;
 using System.Collections.Generic;
-using System.Collections;
-using System.IO;
 using UnityEngine;
 using TheOtherRoles.Objects;
 using static TheOtherRoles.GameHistory;
 using TheOtherRoles.Patches;
+using TheOtherRoles.Utilities;
 
 namespace TheOtherRoles
 {
@@ -345,7 +339,7 @@ namespace TheOtherRoles
 
         public static Sprite getLogSprite() {
             if (logSprite) return logSprite;
-            logSprite = HudManager.Instance.UseButton.fastUseSettings[ImageNames.DoorLogsButton].Image;
+            logSprite = FastDestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings[ImageNames.DoorLogsButton].Image;
             return logSprite;
             }
 
