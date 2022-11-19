@@ -20,7 +20,7 @@ namespace TheOtherRoles {
         SuppressKill,
         BlankKill
     }
-	
+
     public static class Helpers
     {
         public static bool ShowButtons
@@ -184,7 +184,7 @@ namespace TheOtherRoles {
         }
 
         public static Texture2D loadTextureFromDisk(string path) {
-            try {          
+            try {
                 if (File.Exists(path))     {
                     Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
                     byte[] byteTexture = File.ReadAllBytes(path);
@@ -213,7 +213,7 @@ namespace TheOtherRoles {
                     return player;
             return null;
         }
-        
+
         public static Dictionary<byte, PlayerControl> allPlayersById()
         {
             Dictionary<byte, PlayerControl> res = new Dictionary<byte, PlayerControl>();
@@ -247,7 +247,7 @@ namespace TheOtherRoles {
                     else
                         toRemove.Add(t); // TextTask does not have a corresponding RoleInfo and will hence be deleted
                 }
-            }   
+            }
 
             foreach (PlayerTask t in toRemove) {
                 t.OnRemove();
@@ -264,13 +264,19 @@ namespace TheOtherRoles {
                     if (Jackal.canCreateSidekick)
                     {
                         task.Text = cs(roleInfo.color, $"{roleInfo.name}: " + ModTranslation.getString("jackalWithSidekick"));
-                    } 
+                    }
                     else
                     {
                         task.Text = cs(roleInfo.color, $"{roleInfo.name}: " + ModTranslation.getString("jackalShortDesc"));
                     }
-                } else {
-                    task.Text = cs(roleInfo.color, $"{roleInfo.name}: {roleInfo.shortDescription}");  
+                }
+                else if (roleInfo.name == "Invert")
+                {
+                    task.Text = cs(roleInfo.color, $"{roleInfo.name}: {roleInfo.shortDescription} ({Invert.meetings})");
+                }
+                else
+                {
+                    task.Text = cs(roleInfo.color, $"{roleInfo.name}: {roleInfo.shortDescription}");
                 }
 
                 player.myTasks.Insert(0, task);
@@ -458,9 +464,7 @@ namespace TheOtherRoles {
             if (source == null || target == null) return true;
             if (source.isDead()) return false;
             if (target.isDead()) return true;
-            if (Camouflager.camouflageTimer > 0f) return true; // No names are visible
-            if (!source.isImpostor() && Ninja.isStealthed(target)) return true; // Hide ninja nametags from non-impostors
-            if (!source.isRole(RoleType.Fox) && !source.Data.IsDead && Fox.isStealthed(target)) return true;
+            //if (!source.isRole(RoleType.Fox) && !source.Data.IsDead && Fox.isStealthed(target)) return true;
             if (MapOptions.hideOutOfSightNametags && GameStarted && ShipStatus.Instance != null && source.transform != null && target.transform != null)
             {
                 float distMod = 1.025f;
@@ -470,7 +474,7 @@ namespace TheOtherRoles {
                 if (distance > ShipStatus.Instance.CalculateLightRadius(source.Data) * distMod || anythingBetween) return true;
             }
             if (!MapOptions.hidePlayerNames) return false; // All names are visible
-            if (source.isImpostor() && (target.isImpostor() || target.isRole(RoleType.Spy))) return false; // Members of team Impostors see the names of Impostors/Spies
+            if (source.isImpostor() && (target.isImpostor() || target.isRole(RoleType.Spy) || target.isRole(RoleType.Sidekick) || target.isRole(RoleType.Jackal))) return false; // Members of team Impostors see the names of Impostors/Spies
             if (source.getPartner() == target) return false; // Members of team Lovers see the names of each other
             if ((source.isRole(RoleType.Jackal) || source.isRole(RoleType.Sidekick)) && (target.isRole(RoleType.Jackal) || target.isRole(RoleType.Sidekick) || target == Jackal.fakeSidekick)) return false; // Members of team Jackal see the names of each other
             return true;
@@ -499,6 +503,8 @@ namespace TheOtherRoles {
             else clip = nextSkin.IdleAnim;
             float progress = playerPhysics.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
             playerPhysics.myPlayer.cosmetics.skin.skin = nextSkin;
+            if (playerPhysics.Skin.layer.material == DestroyableSingleton<HatManager>.Instance.PlayerMaterial)
+                PlayerControl.SetPlayerMaterialColors(colorId, playerPhysics.Skin.layer);
             spriteAnim.Play(clip, 1f);
             spriteAnim.m_animator.Play("a", 0, progress % 1);
             spriteAnim.m_animator.Update(0f);
@@ -583,6 +589,9 @@ namespace TheOtherRoles {
             if (AmongUsClient.Instance.IsGameOver) return MurderAttemptResult.SuppressKill;
             if (killer == null || killer.Data == null || killer.Data.IsDead || killer.Data.Disconnected) return MurderAttemptResult.SuppressKill; // Allow non Impostor kills compared to vanilla code
             if (target == null || target.Data == null || target.Data.IsDead || target.Data.Disconnected) return MurderAttemptResult.SuppressKill; // Allow killing players in vents compared to vanilla code
+
+            // Handle first kill attempt
+            if (MapOptions.shieldFirstKill && MapOptions.firstKillPlayer == target) return MurderAttemptResult.SuppressKill;
 
             // Handle blank shot
             if (Pursuer.blankedList.Any(x => x.PlayerId == killer.PlayerId)) {

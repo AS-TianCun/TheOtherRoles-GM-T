@@ -6,20 +6,20 @@ using UnityEngine;
 namespace TheOtherRoles.Patches {
     [HarmonyPatch]
     public static class CredentialsPatch {
-        public static string fullCredentials = 
+        public static string fullCredentials =
 $@"<size=130%><color=#ff351f>TheOtherRoles GM T</color></size> v{TheOtherRolesPlugin.Version.ToString()}
 <size=60%>作者:<color=#FCCE03FF>Eisbison</color>, <color=#FCCE03FF>EndOfFile</color>
 <color=#FCCE03FF>Thunderstorm584</color> & <color=#FCCE03FF>Mallöris</color>
 Design by <color=#FCCE03FF>Bavari</color>修改者:<color=#FCCE03FF>MC-AS-Huier</color></size>
 ";
 
-    public static string mainMenuCredentials = 
+    public static string mainMenuCredentials =
 $@"Modded by <color=#FCCE03FF>Eisbison</color>, <color=#FCCE03FF>Thunderstorm584</color>, <color=#FCCE03FF>EndOfFile</color> & <color=#FCCE03FF>Mallöris</color>
 Design by <color=#FCCE03FF>Bavari</color>";
 
         public static string contributorsCredentials =
-$@"<size=60%> <color=#FCCE03FF>Special thanks to K3ndo & Smeggy</color></size>";
-
+$@"<size=60%> <color=#FCCE03FF>Special thanks to K3ndo & Smeggy</color>
+GitHub Contributors: Gendelo3, Alex2911, amsyarasyiq, MaximeGillot, Psynomit</size>";
         [HarmonyPatch(typeof(VersionShower), nameof(VersionShower.Start))]
         private static class VersionShowerPatch
         {

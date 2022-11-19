@@ -31,7 +31,7 @@ namespace TheOtherRoles
 
             Lovers.Clear();
             Opportunist.Clear();
-            Ninja.Clear();
+           // Ninja.Clear();
             Madmate.Clear();
             PlagueDoctor.Clear();
             Lighter.Clear();

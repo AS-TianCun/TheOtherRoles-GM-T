@@ -101,7 +101,7 @@ namespace TheOtherRoles
             { RoleType.Sprinter, typeof(RoleBase<Sprinter>) },
 
             // Impostor
-            { RoleType.Ninja, typeof(RoleBase<Ninja>) },
+          //  { RoleType.Ninja, typeof(RoleBase<Ninja>) },
             { RoleType.NekoKabocha, typeof(RoleBase<NekoKabocha>) },
             { RoleType.SerialKiller, typeof(RoleBase<SerialKiller>) },
 

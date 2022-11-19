@@ -41,7 +41,6 @@ namespace TheOtherRoles.Patches
         VultureWin,
         LawyerSoloWin,
         AdditionalLawyerBonusWin,
-        AdditionalLawyerStolenWin,
         AdditionalAlivePursuerWin,
         PlagueDoctorWin,
         FoxWin,
@@ -118,12 +117,12 @@ namespace TheOtherRoles.Patches
         public static void Postfix(AmongUsClient __instance, [HarmonyArgument(0)] ref EndGameResult endGameResult)
         {
             var gameOverReason = AdditionalTempData.gameOverReason;
-
-            // 狐の勝利条件を満たしたか確認する
+/*
+             狐の勝利条件を満たしたか確認する
             bool isFoxAlive = Fox.isFoxAlive();
             bool isFoxCompletedTasks = Fox.isFoxCompletedTasks(); // 生存中の狐が1匹でもタスクを全て終えていること
             if (isFoxAlive && isFoxCompletedTasks) {
-                // タスク勝利の場合はオプションの設定次第
+                 タスク勝利の場合はオプションの設定次第
                 if (gameOverReason == GameOverReason.HumansByTask && !Fox.crewWinsByTasks)
                 {
                     gameOverReason = (GameOverReason)CustomGameOverReason.FoxWin;
@@ -140,6 +139,7 @@ namespace TheOtherRoles.Patches
                     gameOverReason = (GameOverReason)CustomGameOverReason.FoxWin;
                 }
             }
+            */
             AdditionalTempData.clear();
 
             //foreach (var pc in PlayerControl.AllPlayerControls)
@@ -192,10 +192,10 @@ namespace TheOtherRoles.Patches
             notWinners.AddRange(Madmate.allPlayers);
             notWinners.AddRange(Opportunist.allPlayers);
             notWinners.AddRange(PlagueDoctor.allPlayers);
-            notWinners.AddRange(Fox.allPlayers);
-            notWinners.AddRange(Immoralist.allPlayers);
-            notWinners.AddRange(Akujo.allPlayers);
-            notWinners.AddRange(AkujoHonmei.allPlayers);
+            //notWinners.AddRange(Fox.allPlayers);
+            //notWinners.AddRange(Immoralist.allPlayers);
+            //notWinners.AddRange(Akujo.allPlayers);
+            //notWinners.AddRange(AkujoHonmei.allPlayers);
 
             // Neutral shifter can't win
             if (Shifter.shifter != null && Shifter.isNeutral) notWinners.Add(Shifter.shifter);
@@ -203,14 +203,14 @@ namespace TheOtherRoles.Patches
             // GM can't win at all, and we're treating lovers as a separate class
             if (GM.gm != null) notWinners.Add(GM.gm);
 
-            if (Lovers.separateTeam)
+            /*if (Lovers.separateTeam)
             {
                 foreach (var couple in Lovers.couples)
                 {
                     notWinners.Add(couple.lover1);
                     notWinners.Add(couple.lover2);
                 }
-            }
+            }*/
 
             List<WinningPlayerData> winnersToRemove = new List<WinningPlayerData>();
             foreach (WinningPlayerData winner in TempData.winners)
@@ -224,14 +224,15 @@ namespace TheOtherRoles.Patches
             bool jesterWin = Jester.jester != null && gameOverReason == (GameOverReason)CustomGameOverReason.JesterWin;
             bool arsonistWin = Arsonist.arsonist != null && gameOverReason == (GameOverReason)CustomGameOverReason.ArsonistWin;
             bool miniLose = Mini.mini != null && gameOverReason == (GameOverReason)CustomGameOverReason.MiniLose;
-            bool loversWin = Lovers.anyAlive() && !(Lovers.separateTeam && gameOverReason == GameOverReason.HumansByTask);
+            //bool loversWin = Lovers.anyAlive() && !(Lovers.separateTeam && gameOverReason == GameOverReason.HumansByTask);
             bool teamJackalWin = gameOverReason == (GameOverReason)CustomGameOverReason.TeamJackalWin && ((Jackal.jackal != null && Jackal.jackal.isAlive()) || (Sidekick.sidekick != null && !Sidekick.sidekick.isAlive()));
             bool vultureWin = Vulture.vulture != null && gameOverReason == (GameOverReason)CustomGameOverReason.VultureWin;
             bool lawyerSoloWin = Lawyer.lawyer != null && gameOverReason == (GameOverReason)CustomGameOverReason.LawyerSoloWin;
+            bool isPursurerLose = jesterWin || arsonistWin || miniLose || vultureWin || teamJackalWin;
             bool plagueDoctorWin = PlagueDoctor.exists && gameOverReason == (GameOverReason)CustomGameOverReason.PlagueDoctorWin;
-            bool foxWin = Fox.exists && gameOverReason == (GameOverReason)CustomGameOverReason.FoxWin;
+            //bool foxWin = Fox.exists && gameOverReason == (GameOverReason)CustomGameOverReason.FoxWin;
             bool everyoneDead = AdditionalTempData.playerRoles.All(x => x.Status != FinalStatus.Alive);
-            bool akujoWin = Akujo.numAlive > 0 && gameOverReason != GameOverReason.HumansByTask;
+            //bool akujoWin = Akujo.numAlive > 0 && gameOverReason != GameOverReason.HumansByTask;
 
             // Mini lose
             if (miniLose)
@@ -287,7 +288,7 @@ namespace TheOtherRoles.Patches
                 AdditionalTempData.winCondition = WinCondition.VultureWin;
             }
 
-            // Akujo win conditions
+           /* // Akujo win conditions
             else if (akujoWin)
             {
                 AdditionalTempData.winCondition = WinCondition.AkujoWin;
@@ -300,9 +301,9 @@ namespace TheOtherRoles.Patches
                         TempData.winners.Add(new WinningPlayerData(akujo.honmei.player.Data));
                     }
                 }
-            }
+            }*/
 
-            // Lovers win conditions
+           /* // Lovers win conditions
             else if (loversWin)
             {
                 // Double win for lovers, crewmates also win
@@ -326,7 +327,7 @@ namespace TheOtherRoles.Patches
                         }
                     }
                 }
-            }
+            }*/
 
             // Jackal win condition (should be implemented using a proper GameOverReason in the future)
             else if (teamJackalWin)
@@ -351,15 +352,16 @@ namespace TheOtherRoles.Patches
                     TempData.winners.Add(wpdFormerJackal);
                 }
             }
-            // Lawyer solo win 
-            else if (lawyerSoloWin)
+            // Lawyer solo win
+            else if (lawyerSoloWin && !Pursuer.notAckedExiled)
             {
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
                 WinningPlayerData wpd = new WinningPlayerData(Lawyer.lawyer.Data);
                 TempData.winners.Add(wpd);
                 AdditionalTempData.winCondition = WinCondition.LawyerSoloWin;
             }
-            else if (foxWin)
+
+           /* else if (foxWin)
             {
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
                 foreach (var fox in Fox.players)
@@ -374,6 +376,7 @@ namespace TheOtherRoles.Patches
                 }
                 AdditionalTempData.winCondition = WinCondition.FoxWin;
             }
+            */
 
             // Madmate win with impostors
             if (Madmate.exists && TempData.winners.ToArray().Any(x => x.IsImpostor))
@@ -386,7 +389,7 @@ namespace TheOtherRoles.Patches
             }
 
             // Possible Additional winner: Lawyer
-            if (!lawyerSoloWin && Lawyer.lawyer != null && Lawyer.target != null && Lawyer.target.isAlive())
+            if (!lawyerSoloWin && Lawyer.lawyer != null && Lawyer.target != null && (!Lawyer.target.Data.IsDead || Lawyer.target == Jester.jester) && !Pursuer.notAckedExiled)
             {
                 WinningPlayerData winningClient = null;
                 foreach (WinningPlayerData winner in TempData.winners)
@@ -399,15 +402,7 @@ namespace TheOtherRoles.Patches
                 { // The Lawyer wins if the client is winning (and alive, but if he wasn't the Lawyer shouldn't exist anymore)
                     if (!TempData.winners.ToArray().Any(x => x.PlayerName == Lawyer.lawyer.Data.PlayerName))
                         TempData.winners.Add(new WinningPlayerData(Lawyer.lawyer.Data));
-                    if (Lawyer.lawyer.isAlive())
-                    { // The Lawyer steals the clients win
-                        TempData.winners.Remove(winningClient);
-                        AdditionalTempData.additionalWinConditions.Add(WinCondition.AdditionalLawyerStolenWin);
-                    }
-                    else
-                    { // The Lawyer wins together with the client
-                        AdditionalTempData.additionalWinConditions.Add(WinCondition.AdditionalLawyerBonusWin);
-                    }
+                    AdditionalTempData.additionalWinConditions.Add(WinCondition.AdditionalLawyerBonusWin); // The Lawyer wins together with the client
                 }
             }
 
@@ -425,7 +420,7 @@ namespace TheOtherRoles.Patches
                     AdditionalTempData.additionalWinConditions.Add(WinCondition.OpportunistWin);
 
                 // Possible Additional winner: Pursuer
-                if (Pursuer.pursuer != null && Pursuer.pursuer.isAlive())
+                if (Pursuer.pursuer != null && Pursuer.pursuer.isAlive() && !isPursurerLose && !TempData.winners.ToArray().Any(x => x.IsImpostor))
                 {
                     if (!TempData.winners.ToArray().Any(x => x.PlayerName == Pursuer.pursuer.Data.PlayerName))
                         TempData.winners.Add(new WinningPlayerData(Pursuer.pursuer.Data));
@@ -644,9 +639,6 @@ namespace TheOtherRoles.Patches
                     {
                         switch (cond)
                         {
-                            case WinCondition.AdditionalLawyerStolenWin:
-                                textRenderer.text += $"\n{Helpers.cs(Lawyer.color, ModTranslation.getString("lawyerExtraStolen"))}";
-                                break;
                             case WinCondition.AdditionalLawyerBonusWin:
                                 textRenderer.text += $"\n{Helpers.cs(Lawyer.color, ModTranslation.getString("lawyerExtraBonus"))}";
                                 break;

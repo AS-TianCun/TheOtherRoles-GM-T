@@ -23,7 +23,7 @@ namespace TheOtherRoles
 
         public static void setCustomButtonCooldowns()
         {
-            Ninja.SetButtonCooldowns();
+          //  Ninja.SetButtonCooldowns();
             Sheriff.SetButtonCooldowns();
             PlagueDoctor.SetButtonCooldowns();
             Lighter.SetButtonCooldowns();
@@ -47,7 +47,7 @@ namespace TheOtherRoles
 
         public static void makeButtons(HudManager hm)
         {
-            Ninja.MakeButtons(hm);
+            //Ninja.MakeButtons(hm);
             Sheriff.MakeButtons(hm);
             PlagueDoctor.MakeButtons(hm);
             Lighter.MakeButtons(hm);
