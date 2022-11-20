@@ -6,6 +6,7 @@ using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
 using static TheOtherRoles.MapOptions;
 using static TheOtherRoles.GameHistory;
+using TheOtherRoles.Objects;
 using TheOtherRoles.Utilities;
 using System;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace TheOtherRoles.Patches {
         static SpriteRenderer[] renderers;
         private static GameData.PlayerInfo target = null;
         private const float scale = 0.65f;
+        private static TMPro.TextMeshPro swapperChargesText;
+        private static PassiveButton[] swapperButtonList;
+        private static TMPro.TextMeshPro swapperConfirmButtonLabel;
         private static Sprite blankNameplate = null;
         public static bool nameplatesChanged = true;
         public static bool animateSwap = false;
@@ -101,7 +105,7 @@ namespace TheOtherRoles.Patches {
                     if (votedFor != 252 && votedFor != 255 && votedFor != 254) {
                         PlayerControl player = Helpers.playerById((byte)playerVoteArea.TargetPlayerId);
                         if (player == null || player.Data == null || player.Data.IsDead || player.Data.Disconnected || player.isGM()) continue;
-                        
+
                         // don't try to vote for the GM
                         if (GM.gm != null && votedFor == GM.gm.PlayerId) continue;
 
@@ -113,6 +117,16 @@ namespace TheOtherRoles.Patches {
                             dictionary[votedFor] = additionalVotes;
                     }
                 }
+
+                // If skipping is disabled, replace skipps/no-votes with self vote
+                if (target == null && blockSkippingInEmergencyMeetings && noVoteIsSelfVote)
+                {
+                    foreach (PlayerVoteArea playerVoteArea in __instance.playerStates)
+                    {
+                        if (playerVoteArea.VotedFor == byte.MaxValue - 1) playerVoteArea.VotedFor = playerVoteArea.TargetPlayerId; // TargetPlayerId
+                    }
+                }
+
 
                 // Swapper swap votes
                 if (Swapper.swapper != null && !Swapper.swapper.Data.IsDead) {
@@ -151,6 +165,22 @@ namespace TheOtherRoles.Patches {
 			        KeyValuePair<byte, int> max = self.MaxPair(out tie);
                     GameData.PlayerInfo exiled = GameData.Instance.AllPlayers.ToArray().FirstOrDefault(v => !tie && v.PlayerId == max.Key && !v.IsDead);
 
+                    // TieBreaker 
+                    Tiebreaker.isTiebreak = false;
+                    int maxVoteValue = self.Values.Max();
+                    List<GameData.PlayerInfo> potentialExiled = new List<GameData.PlayerInfo>();
+
+
+                    PlayerVoteArea tb = null;
+                    if (Tiebreaker.tiebreaker != null)
+                        tb = __instance.playerStates.ToArray().FirstOrDefault(x => x.TargetPlayerId == Tiebreaker.tiebreaker.PlayerId);
+                    bool isTiebreakerSkip = tb == null || tb.VotedFor == 253;
+                    if (tb != null && tb.AmDead) isTiebreakerSkip = true;
+
+                    foreach (KeyValuePair<byte, int> pair in self)
+                        if (pair.Value == maxVoteValue && !isTiebreakerSkip && pair.Key != 253)
+                            potentialExiled.Add(GameData.Instance.AllPlayers.ToArray().FirstOrDefault(x => x.PlayerId == pair.Key));
+
                     MeetingHud.VoterState[] array = new MeetingHud.VoterState[__instance.playerStates.Length];
                     for (int i = 0; i < __instance.playerStates.Length; i++)
                     {
@@ -159,6 +189,16 @@ namespace TheOtherRoles.Patches {
                             VoterId = playerVoteArea.TargetPlayerId,
                             VotedForId = playerVoteArea.VotedFor
                         };
+
+                        if (Tiebreaker.tiebreaker != null && tie && playerVoteArea.TargetPlayerId == Tiebreaker.tiebreaker.PlayerId && potentialExiled.FindAll(x => x != null && x.PlayerId == playerVoteArea.VotedFor).Count > 0)
+                        {
+                            exiled = potentialExiled.ToArray().FirstOrDefault(v => v.PlayerId == playerVoteArea.VotedFor);
+                            tie = false;
+
+                            MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SetTiebreak, Hazel.SendOption.Reliable, -1);
+                            AmongUsClient.Instance.FinishRpcImmediately(writer);
+                            RPCProcedure.setTiebreak();
+                        }
                     }
 
                     // RPCVotingComplete
@@ -186,7 +226,7 @@ namespace TheOtherRoles.Patches {
         class MeetingHudBloopAVoteIconPatch {
             public static bool Prefix(MeetingHud __instance, [HarmonyArgument(0)]GameData.PlayerInfo voterPlayer, [HarmonyArgument(1)]int index, [HarmonyArgument(2)]Transform parent) {
                 SpriteRenderer spriteRenderer = UnityEngine.Object.Instantiate<SpriteRenderer>(__instance.PlayerVotePrefab);
-                if (!(!PlayerControl.GameOptions.AnonymousVotes || (CachedPlayer.LocalPlayer.PlayerControl.Data.IsDead && MapOptions.ghostsSeeVotes)))
+                if (!(!PlayerControl.GameOptions.AnonymousVotes || (CachedPlayer.LocalPlayer.PlayerControl.Data.IsDead && MapOptions.ghostsSeeVotes)|| Mayor.mayor != null && PlayerControl.LocalPlayer == Mayor.mayor && Mayor.canSeeVoteColors && TasksHandler.taskInfo(PlayerControl.LocalPlayer.Data).Item1 >= Mayor.tasksNeededToSeeVoteColors))
                     voterPlayer.Object.SetColor(6);
                 voterPlayer.Object.SetPlayerMaterialColors(spriteRenderer);
                 spriteRenderer.transform.SetParent(parent);

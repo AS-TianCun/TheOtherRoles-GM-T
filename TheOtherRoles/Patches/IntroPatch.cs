@@ -5,6 +5,7 @@ using static TheOtherRoles.TheOtherRolesGM;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Hazel;
 using TheOtherRoles.Utilities;
 
 namespace TheOtherRoles.Patches {
@@ -82,6 +83,19 @@ namespace TheOtherRoles.Patches {
                 HudManager.Instance.roomTracker.text.SetText("");
                 HudManager.Instance.roomTracker.enabled = false;
             }
+            // First kill
+            if (AmongUsClient.Instance.AmHost && MapOptions.shieldFirstKill && MapOptions.firstKillName != "")
+            {
+                PlayerControl target = PlayerControl.AllPlayerControls.ToArray().ToList().FirstOrDefault(x => x.Data.PlayerName.Equals(MapOptions.firstKillName));
+                if (target != null)
+                {
+                    MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SetFirstKill, Hazel.SendOption.Reliable, -1);
+                    writer.Write(target.PlayerId);
+                    AmongUsClient.Instance.FinishRpcImmediately(writer);
+                    RPCProcedure.setFirstKill(target.PlayerId);
+                }
+            }
+            MapOptions.firstKillName = "";
         }
     }
 
@@ -122,7 +136,7 @@ namespace TheOtherRoles.Patches {
 
         public static void setupIntroTeam(IntroCutscene __instance, ref  Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam) {
             List<RoleInfo> infos = RoleInfo.getRoleInfoForPlayer(PlayerControl.LocalPlayer);
-            RoleInfo roleInfo = infos.Where(info => info.roleType != RoleType.Lovers).FirstOrDefault();
+            RoleInfo roleInfo = infos.Where(info => !info.isModifier).FirstOrDefault();
             if (roleInfo == null) return;
             if (PlayerControl.LocalPlayer.isNeutral() || PlayerControl.LocalPlayer.isGM())
             {
