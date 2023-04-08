@@ -7,8 +7,6 @@ using HarmonyLib;
 using Hazel;
 using System.Reflection;
 using System.Text;
-using static TheOtherRoles.TheOtherRoles;
-
 namespace TheOtherRoles
 {
     public class CustomOption
@@ -474,24 +472,6 @@ namespace TheOtherRoles
         }
     }
 
-    [HarmonyPatch(typeof(KeyValueOption), nameof(KeyValueOption.OnEnable))]
-    public class KeyValueOptionEnablePatch
-    {
-        public static void Postfix(KeyValueOption __instance)
-        {
-            GameOptionsData gameOptions = PlayerControl.GameOptions;
-            if (__instance.Title == StringNames.GameMapName)
-            {
-                __instance.Selected = gameOptions.MapId;
-            }
-            try
-            {
-                __instance.ValueText.text = __instance.Values[Mathf.Clamp(__instance.Selected, 0, __instance.Values.Count - 1)].Key;
-            }
-            catch { }
-        }
-    }
-
     [HarmonyPatch(typeof(StringOption), nameof(StringOption.OnEnable))]
     public class StringOptionEnablePatch
     {
@@ -640,38 +620,6 @@ namespace TheOtherRoles
             __instance.Scroller.ContentYBounds.max += 0.5F;
         }
     }
-
-    [HarmonyPatch(typeof(Constants), nameof(Constants.ShouldFlipSkeld))]
-    class ConstantsShouldFlipSkeldPatch
-    {
-        public static bool Prefix(ref bool __result)
-        {
-            if (PlayerControl.GameOptions == null) return true;
-            __result = GameOptionsManager.Instance.currentGameOptions.MapId == 3;
-            return false;
-        }
-
-        public static bool aprilFools
-        {
-            get
-            {
-                try
-                {
-                    DateTime utcNow = DateTime.UtcNow;
-                    DateTime t = new DateTime(utcNow.Year, 4, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-                    DateTime t2 = t.AddDays(1.0);
-                    if (utcNow >= t && utcNow <= t2)
-                    {
-                        return true;
-                    }
-                }
-                catch
-                {
-                }
-                return false;
-            }
-        }
-    }
     [HarmonyPatch(typeof(Constants), nameof(Constants.ShouldHorseAround))]
     class ConstantsShouldHorseAroundPatch
     {
@@ -683,15 +631,6 @@ namespace TheOtherRoles
                 return false;
             }
             return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(FreeWeekendShower), nameof(FreeWeekendShower.Start))]
-    class FreeWeekendShowerPatch
-    {
-        public static bool Prefix()
-        {
-            return ConstantsShouldFlipSkeldPatch.aprilFools;
         }
     }
 
@@ -845,36 +784,6 @@ namespace TheOtherRoles
             int counter = TheOtherRolesPlugin.optionsPage = TheOtherRolesPlugin.optionsPage % numPages;
 
             __result = pages[counter].Trim('\r', '\n') + "\n\n" + tl("pressTabForMore") + $" ({counter + 1}/{numPages})";
-        }
-    }
-
-    [HarmonyPatch(typeof(GameOptionsData), nameof(GameOptionsData.GetAdjustedNumImpostors))]
-    public static class GameOptionsGetAdjustedNumImpostorsPatch
-    {
-        public static bool Prefix(GameOptionsData __instance, ref int __result)
-        {
-            __result = PlayerControl.GameOptions.NumImpostors;
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(SaveManager), "GameHostOptions", MethodType.Getter)]
-    public static class SaveManagerGameHostOptionsPatch
-    {
-        private static int numImpostors;
-        public static void Prefix()
-        {
-            if (SaveManager.hostOptionsData == null)
-            {
-                SaveManager.hostOptionsData = SaveManager.LoadGameOptions("gameHostOptions");
-            }
-
-            numImpostors = SaveManager.hostOptionsData.NumImpostors;
-        }
-
-        public static void Postfix(ref GameOptionsData __result)
-        {
-            __result.NumImpostors = numImpostors;
         }
     }
 

@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
-using Il2CppSystem;
 using HarmonyLib;
-using UnhollowerBaseLib;
-using Assets.CoreScripts;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using AmongUs.Data.Legacy;
 
 namespace TheOtherRoles.Modules {
     public class CustomColors {
@@ -241,16 +238,18 @@ namespace TheOtherRoles.Modules {
                     }
                 }
             }
-            [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.LoadPlayerPrefs))]
+            [HarmonyPatch(typeof(LegacySaveManager), nameof(LegacySaveManager.LoadPlayerPrefs))]
             private static class LoadPlayerPrefsPatch { // Fix Potential issues with broken colors
                 private static bool needsPatch = false;
-                public static void Prefix([HarmonyArgument(0)] bool overrideLoad) {
-                    if (!SaveManager.loaded || overrideLoad)
+                public static void Prefix([HarmonyArgument(0)] bool overrideLoad)
+                {
+                    if (!LegacySaveManager.loaded || overrideLoad)
                         needsPatch = true;
                 }
-                public static void Postfix() {
+                public static void Postfix()
+                {
                     if (!needsPatch) return;
-                    SaveManager.colorConfig %= CustomColors.pickableColors;
+                    LegacySaveManager.colorConfig %= CustomColors.pickableColors;
                     needsPatch = false;
                 }
             }

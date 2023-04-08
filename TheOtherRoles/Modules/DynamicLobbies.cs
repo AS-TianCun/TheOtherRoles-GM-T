@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using UnityEngine;
 using Hazel;
 using InnerNet;
 
@@ -21,8 +20,8 @@ namespace TheOtherRoles.Modules {
                                     __instance.AddChat(PlayerControl.LocalPlayer, "Invalid Size\nUsage: /size {amount}");
                                 } else {
                                     LobbyLimit = Math.Clamp(LobbyLimit, 4, 15);
-                                    if (LobbyLimit != PlayerControl.GameOptions.MaxPlayers) {
-                                        PlayerControl.GameOptions.MaxPlayers = LobbyLimit;
+                                    if (LobbyLimit != GameOptionsManager.Instance.currentGameOptions.GetInt(Int32OptionNames.MaxPlayers)){
+                                        GameOptionsManager.Instance.currentGameOptions.SetInt(Int32OptionNames.MaxPlayers, LobbyLimit);
                                         DestroyableSingleton<GameStartManager>.Instance.LastPlayerCount = LobbyLimit;
                                         PlayerControl.LocalPlayer.RpcSyncSettings(PlayerControl.GameOptions);
                                         __instance.AddChat(PlayerControl.LocalPlayer, $"Lobby Size changed to {LobbyLimit} players");
