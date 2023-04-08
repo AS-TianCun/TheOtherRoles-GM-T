@@ -2,15 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Collections;
-using UnhollowerBaseLib;
 using UnityEngine;
 using System.Linq;
 using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
 using static TheOtherRoles.GameHistory;
 using TheOtherRoles.Modules;
-using HarmonyLib;
 using Hazel;
 using TheOtherRoles.Patches;
 
@@ -21,7 +18,7 @@ namespace TheOtherRoles {
         SuppressKill,
         BlankKill
     }
-	
+
     public static class Helpers
     {
         public static bool ShowButtons

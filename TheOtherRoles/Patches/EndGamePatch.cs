@@ -26,6 +26,7 @@ namespace TheOtherRoles.Patches
         PlagueDoctorWin = 17,
         FoxWin = 18,
         AkujoWin = 19,
+        ForceEnd = 20,
     }
 
     enum WinCondition

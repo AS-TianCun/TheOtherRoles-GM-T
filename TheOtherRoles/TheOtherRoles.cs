@@ -1,18 +1,10 @@
-﻿using System.Net;
-using System.Linq;
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.IL2CPP;
+﻿using System.Linq;
 using HarmonyLib;
-using Hazel;
 using System;
 using System.Collections.Generic;
-using System.Collections;
-using System.IO;
 using UnityEngine;
 using TheOtherRoles.Objects;
-using static TheOtherRoles.GameHistory;
-using TheOtherRoles.Patches;
+
 
 namespace TheOtherRoles
 {
@@ -113,7 +105,7 @@ namespace TheOtherRoles
             public static Color color = new Color32(0, 40, 245, byte.MaxValue);
             private static Sprite buttonSprite;
 
-            public static int remainingFixes = 1;           
+            public static int remainingFixes = 1;
             public static bool highlightForImpostors = true;
             public static bool highlightForTeamJackal = true; 
 
@@ -350,7 +342,7 @@ namespace TheOtherRoles
             }
 
             public static Sprite getAdminSprite() {
-                byte mapId = PlayerControl.GameOptions.MapId;
+                byte mapId = GameOptionsManager.Instance.currentGameOptions.MapId;
                 UseButtonSettings button = HudManager.Instance.UseButton.fastUseSettings[ImageNames.PolusAdminButton]; // Polus
                 if (mapId == 0 || mapId == 3) button = HudManager.Instance.UseButton.fastUseSettings[ImageNames.AdminMapButton]; // Skeld || Dleks
                 else if (mapId == 1) button = HudManager.Instance.UseButton.fastUseSettings[ImageNames.MIRAAdminButton]; // Mira HQ

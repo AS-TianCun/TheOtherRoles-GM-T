@@ -4,7 +4,6 @@ using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
 using static TheOtherRoles.HudManagerStartPatch;
 using static TheOtherRoles.GameHistory;
-using static TheOtherRoles.MapOptions;
 using TheOtherRoles.Objects;
 using TheOtherRoles.Patches;
 using System.Collections.Generic;
@@ -137,18 +136,6 @@ namespace TheOtherRoles
             }
         }
 
-        public static void forceEnd()
-        {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
-            {
-                if (!player.Data.Role.IsImpostor)
-                {
-                    player.RemoveInfected();
-                    player.MurderPlayer(player);
-                    player.Data.IsDead = true;
-                }
-            }
-        }
 
         public static void setRole(byte roleId, byte playerId, byte flag)
         {
@@ -246,11 +233,11 @@ namespace TheOtherRoles
                 AmongUsClient.Instance.Dispatcher.Add(new Action(() =>
                 {
                     ShipStatus.Instance.enabled = false;
-                    ShipStatus.Instance.BeginCalled = false;
+                    GameManager.Instance.ShouldCheckForGameEnd = false;
                     AmongUsClient.Instance.OnGameEnd(new EndGameResult((GameOverReason)reason, false));
 
                     if (AmongUsClient.Instance.AmHost)
-                        ShipStatus.RpcEndGame((GameOverReason)reason, false);
+                        GameManager.Instance.RpcEndGame((GameOverReason)reason, false);
                 }));
             }
         }
@@ -264,7 +251,7 @@ namespace TheOtherRoles
         }
 
         public static void dynamicMapOption(byte mapId) {
-            PlayerControl.GameOptions.MapId = mapId;
+            GameOptionsManager.Instance.currentGameOptions.SetByte(ByteOptionNames.MapId, mapId);
         }
 
         // Role functionality
@@ -661,7 +648,7 @@ namespace TheOtherRoles
                 default: camera.NewName = StringNames.ExitButton; break;
             }
 
-            if (PlayerControl.GameOptions.MapId == 2 || PlayerControl.GameOptions.MapId == 4) camera.transform.localRotation = new Quaternion(0, 0, 1, 1); // Polus and Airship 
+            if (GameOptionsManager.Instance.currentGameOptions.MapId == 2 || GameOptionsManager.Instance.currentGameOptions.MapId == 4) camera.transform.localRotation = new Quaternion(0, 0, 1, 1); // Polus and Airship 
 
             if (PlayerControl.LocalPlayer == SecurityGuard.securityGuard)
             {
@@ -740,7 +727,7 @@ namespace TheOtherRoles
 
             if (player.PlayerId == PlayerControl.LocalPlayer.PlayerId && client != null)
             {
-                Transform playerInfoTransform = client.nameText.transform.parent.FindChild("Info");
+                Transform playerInfoTransform = client.cosmetics.nameText.transform.parent.FindChild("Info");
                 TMPro.TextMeshPro playerInfo = playerInfoTransform != null ? playerInfoTransform.GetComponent<TMPro.TextMeshPro>() : null;
                 if (playerInfo != null) playerInfo.text = "";
             }
@@ -1044,9 +1031,6 @@ namespace TheOtherRoles
                         break;
                     case (byte)CustomRPC.ShareOptions:
                         RPCProcedure.ShareOptions((int)reader.ReadPackedUInt32(), reader);
-                        break;
-                    case (byte)CustomRPC.ForceEnd:
-                        RPCProcedure.forceEnd();
                         break;
                     case (byte)CustomRPC.SetRole:
                         byte roleId = reader.ReadByte();

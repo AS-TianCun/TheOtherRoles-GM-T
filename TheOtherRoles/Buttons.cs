@@ -430,7 +430,7 @@ namespace TheOtherRoles
                    if (!hackerVitalsButton.isEffectActive) PlayerControl.LocalPlayer.moveable = true;
                    if (MapBehaviour.Instance && MapBehaviour.Instance.isActiveAndEnabled) MapBehaviour.Instance.Close();
                },
-               PlayerControl.GameOptions.MapId == 3,
+               GameOptionsManager.Instance.currentGameOptions.MapId == 3,
                DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.Admin)
             );
 
@@ -444,7 +444,7 @@ namespace TheOtherRoles
             hackerVitalsButton = new CustomButton(
                () =>
                {
-                   if (PlayerControl.GameOptions.MapId != 1)
+                   if (GameOptionsManager.Instance.currentGameOptions.MapId != 1)
                    {
                        if (Hacker.vitals == null)
                        {
@@ -474,13 +474,13 @@ namespace TheOtherRoles
 
                    Hacker.chargesVitals--;
                },
-               () => { return Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer && MapOptions.couldUseVitals && PlayerControl.LocalPlayer.isAlive() && PlayerControl.GameOptions.MapId != 0 && PlayerControl.GameOptions.MapId != 3; },
+               () => { return Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer && MapOptions.couldUseVitals && PlayerControl.LocalPlayer.isAlive() && GameOptionsManager.Instance.currentGameOptions.MapId != 0 && GameOptionsManager.Instance.currentGameOptions.MapId != 3; },
                () =>
                {
                    if (hackerVitalsChargesText != null)
                        hackerVitalsChargesText.text = String.Format(ModTranslation.getString("hackerChargesText"), Hacker.chargesVitals, Hacker.toolsNumber);
-                   hackerVitalsButton.actionButton.graphic.sprite = PlayerControl.GameOptions.MapId == 1 ? Hacker.getLogSprite() : Hacker.getVitalsSprite();
-                   hackerVitalsButton.actionButton.OverrideText(PlayerControl.GameOptions.MapId == 1 ?
+                   hackerVitalsButton.actionButton.graphic.sprite = GameOptionsManager.Instance.currentGameOptions.MapId == 1 ? Hacker.getLogSprite() : Hacker.getVitalsSprite();
+                   hackerVitalsButton.actionButton.OverrideText(GameOptionsManager.Instance.currentGameOptions.MapId == 1 ?
                         TranslationController.Instance.GetString(StringNames.DoorlogLabel) :
                         TranslationController.Instance.GetString(StringNames.VitalsLabel));
                    return Hacker.chargesVitals > 0 && MapOptions.canUseVitals;
@@ -504,12 +504,12 @@ namespace TheOtherRoles
                    if(!hackerAdminTableButton.isEffectActive) PlayerControl.LocalPlayer.moveable = true;
                    if (Minigame.Instance)
                    {
-                       if (PlayerControl.GameOptions.MapId == 1) Hacker.doorLog.ForceClose();
+                       if (GameOptionsManager.Instance.currentGameOptions.MapId == 1) Hacker.doorLog.ForceClose();
                        else Hacker.vitals.ForceClose();
                    }
                },
                false,
-               PlayerControl.GameOptions.MapId == 1 ?
+               GameOptionsManager.Instance.currentGameOptions.MapId == 1 ?
                     TranslationController.Instance.GetString(StringNames.DoorlogLabel) :
                     TranslationController.Instance.GetString(StringNames.VitalsLabel)
             );
@@ -921,7 +921,7 @@ namespace TheOtherRoles
                         SecurityGuard.ventTarget = null;
 
                     }
-                    else if (PlayerControl.GameOptions.MapId != 1 && MapOptions.couldUseCameras)
+                    else if (GameOptionsManager.Instance.currentGameOptions.MapId != 1 && MapOptions.couldUseCameras)
                     { // Place camera if there's no vent and it's not MiraHQ
                         var pos = PlayerControl.LocalPlayer.transform.position;
                         byte[] buff = new byte[sizeof(float) * 2];
@@ -949,7 +949,7 @@ namespace TheOtherRoles
                 () => { return SecurityGuard.securityGuard != null && SecurityGuard.securityGuard == PlayerControl.LocalPlayer && PlayerControl.LocalPlayer.isAlive() && SecurityGuard.remainingScrews >= Mathf.Min(SecurityGuard.ventPrice, SecurityGuard.camPrice); },
                 () =>
                 {
-                    if (SecurityGuard.ventTarget == null && PlayerControl.GameOptions.MapId != 1)
+                    if (SecurityGuard.ventTarget == null && GameOptionsManager.Instance.currentGameOptions.MapId != 1)
                     {
                         securityGuardButton.buttonText = ModTranslation.getString("PlaceCameraText");
                         securityGuardButton.Sprite = SecurityGuard.getPlaceCameraButtonSprite();
@@ -966,7 +966,7 @@ namespace TheOtherRoles
                         return SecurityGuard.remainingScrews >= SecurityGuard.ventPrice && PlayerControl.LocalPlayer.CanMove;
                     }
 
-                    return PlayerControl.GameOptions.MapId != 1 && MapOptions.couldUseCameras && SecurityGuard.remainingScrews >= SecurityGuard.camPrice && PlayerControl.LocalPlayer.CanMove;
+                    return GameOptionsManager.Instance.currentGameOptions.MapId != 1 && MapOptions.couldUseCameras && SecurityGuard.remainingScrews >= SecurityGuard.camPrice && PlayerControl.LocalPlayer.CanMove;
                 },
                 () => { securityGuardButton.Timer = securityGuardButton.MaxTimer; },
                 SecurityGuard.getPlaceCameraButtonSprite(),
@@ -986,9 +986,9 @@ namespace TheOtherRoles
 
             securityGuardCamButton = new CustomButton(
                 () => {
-                    if (PlayerControl.GameOptions.MapId != 1) {
+                    if (GameOptionsManager.Instance.currentGameOptions.MapId != 1) {
                         if (SecurityGuard.minigame == null) {
-                            byte mapId = PlayerControl.GameOptions.MapId;
+                            byte mapId = GameOptionsManager.Instance.currentGameOptions.MapId;
                             var e = UnityEngine.Object.FindObjectsOfType<SystemConsole>().FirstOrDefault(x => x.gameObject.name.Contains("Surv_Panel"));
                             if (mapId == 0 || mapId == 3) e = UnityEngine.Object.FindObjectsOfType<SystemConsole>().FirstOrDefault(x => x.gameObject.name.Contains("SurvConsole"));
                             else if (mapId == 4) e = UnityEngine.Object.FindObjectsOfType<SystemConsole>().FirstOrDefault(x => x.gameObject.name.Contains("task_cams"));
@@ -1017,8 +1017,8 @@ namespace TheOtherRoles
                 () => {
                     if (securityGuardChargesText != null)
                         securityGuardChargesText.text = securityGuardChargesText.text = String.Format(ModTranslation.getString("hackerChargesText"), SecurityGuard.charges, SecurityGuard.maxCharges);
-                    securityGuardCamButton.actionButton.graphic.sprite = PlayerControl.GameOptions.MapId == 1 ? SecurityGuard.getLogSprite() : SecurityGuard.getCamSprite();
-                    securityGuardCamButton.actionButton.OverrideText(PlayerControl.GameOptions.MapId == 1 ?
+                    securityGuardCamButton.actionButton.graphic.sprite = GameOptionsManager.Instance.currentGameOptions.MapId == 1 ? SecurityGuard.getLogSprite() : SecurityGuard.getCamSprite();
+                    securityGuardCamButton.actionButton.OverrideText(GameOptionsManager.Instance.currentGameOptions.MapId == 1 ?
                         TranslationController.Instance.GetString(StringNames.SecurityLogsSystem) :
                         TranslationController.Instance.GetString(StringNames.SecurityCamsSystem));
                     return PlayerControl.LocalPlayer.CanMove && SecurityGuard.charges > 0;
@@ -1043,7 +1043,7 @@ namespace TheOtherRoles
                     PlayerControl.LocalPlayer.moveable = true;
                 },
                 false,
-                PlayerControl.GameOptions.MapId == 1 ?
+                GameOptionsManager.Instance.currentGameOptions.MapId == 1 ?
                     TranslationController.Instance.GetString(StringNames.SecurityLogsSystem) :
                     TranslationController.Instance.GetString(StringNames.SecurityCamsSystem)
             );

@@ -1,10 +1,7 @@
+global using AmongUs.GameOptions;
 using HarmonyLib;
-using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
-using System.Collections;
-using System.Collections.Generic;
 using System;
-using UnhollowerBaseLib;
 
 namespace TheOtherRoles {
     [HarmonyPatch]
@@ -59,7 +56,7 @@ namespace TheOtherRoles {
             int CompletedTasks = 0;
             if (!playerInfo.Disconnected && playerInfo.Tasks != null &&
                 playerInfo.Object &&
-                (PlayerControl.GameOptions.GhostsDoTasks || !playerInfo.IsDead) &&
+                (GameOptionsManager.Instance.currentGameOptions.GetBool(BoolOptionNames.GhostsDoTasks) || !playerInfo.IsDead) &&
                 playerInfo.Role && playerInfo.Role.TasksCountTowardProgress &&
                 !(playerInfo.Object.isGM() && !GM.hasTasks) &&
                 !(playerInfo.Object.isLovers() && !Lovers.hasTasks) &&

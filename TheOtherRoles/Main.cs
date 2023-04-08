@@ -1,22 +1,21 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using BepInEx.IL2CPP;
 using HarmonyLib;
 using Hazel;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Linq;
-using System.Net;
-using System.IO;
 using System;
-using System.Reflection;
-using UnhollowerBaseLib;
 using UnityEngine;
 using TheOtherRoles.Modules;
+using BepInEx.Unity.IL2CPP;
+using Reactor.Networking;
+using Reactor.Networking.Attributes;
+using TheOtherRoles.Patches;
 
 namespace TheOtherRoles
 {
     [BepInPlugin(Id, "The Other Roles GM", VersionString)]
+    [ReactorModFlags(ModFlags.RequireOnAllClients)]
     [BepInProcess("Among Us.exe")]
     public class TheOtherRolesPlugin : BasePlugin
     {
@@ -112,15 +111,18 @@ namespace TheOtherRoles
     }
 
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Awake))]
-    public static class ChatControllerAwakePatch {
-        private static void Prefix() {
-            if (!EOSManager.Instance.IsMinor()) {
-                SaveManager.chatModeType = 1;
-                SaveManager.isGuest = false;
+    public static class ChatControllerAwakePatch
+    {
+        private static void Prefix()
+        {
+            if (!EOSManager.Instance.isKWSMinor)
+            {
+                AmongUs.Data.DataManager.Settings.Multiplayer.chatMode = (InnerNet.QuickChatModes)1;
+                // SaveManager.isGuest = false;
             }
         }
     }
-    
+
     // Debugging tools
     [HarmonyPatch(typeof(KeyboardJoystick), nameof(KeyboardJoystick.Update))]
     public static class DebugManager
@@ -155,17 +157,16 @@ namespace TheOtherRoles
                 playerControl.SetColor(color);
                 playerControl.SetHat(HatManager.Instance.allHats[hat].ProductId, color);
                 playerControl.SetPet(HatManager.Instance.allPets[pet].ProductId, color);
-                playerControl.SetVisor(HatManager.Instance.allVisors[visor].ProductId);
+                playerControl.SetVisor(HatManager.Instance.allVisors[visor].ProductId, color);
                 playerControl.SetSkin(HatManager.Instance.allSkins[skin].ProductId, color);
                 playerControl.SetNamePlate(HatManager.Instance.allNamePlates[nameplate].ProductId);
                 GameData.Instance.RpcSetTasks(playerControl.PlayerId, new byte[0]);
             }
 
             // Terminate round
-            if(Input.GetKeyDown(KeyCode.L) && AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started) {
-                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.ForceEnd, Hazel.SendOption.Reliable, -1);
-                AmongUsClient.Instance.FinishRpcImmediately(writer);
-                RPCProcedure.forceEnd();
+            if(Input.GetKeyDown(KeyCode.L) && AmongUsClient.Instance.GameState == InnerNet.InnerNetClient.GameStates.Started && AmongUsClient.Instance.AmHost)
+            {
+                GameManager.Instance.RpcEndGame((GameOverReason)CustomGameOverReason.ForceEnd, false);
             }
         }
 
