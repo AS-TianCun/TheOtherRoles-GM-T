@@ -4,9 +4,7 @@ using System;
 using UnityEngine;
 using static TheOtherRoles.TheOtherRoles;
 using static TheOtherRoles.TheOtherRolesGM;
-using TheOtherRoles.Modules;
 using TheOtherRoles.Objects;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace TheOtherRoles
@@ -398,7 +396,11 @@ namespace TheOtherRoles
                () =>
                {
                    if (!MapBehaviour.Instance || !MapBehaviour.Instance.isActiveAndEnabled)
-                       DestroyableSingleton<HudManager>.Instance.ShowMap((System.Action<MapBehaviour>)(m => m.ShowCountOverlay()));
+                   {
+                       HudManager __instance = DestroyableSingleton<HudManager>.Instance;
+                       __instance.InitMap();
+                       MapBehaviour.Instance.ShowCountOverlay(allowedToMove: true, showLivePlayerPosition: true, includeDeadBodies: true);
+                   }
 
                    if (Hacker.cantMove) PlayerControl.LocalPlayer.moveable = false;
                    PlayerControl.LocalPlayer.NetTransform.Halt(); // Stop current movement 
@@ -1383,7 +1385,7 @@ namespace TheOtherRoles
                         witchSpellButton.MaxTimer += Witch.cooldownAddition;
                         witchSpellButton.Timer = witchSpellButton.MaxTimer;
                         if (Witch.triggerBothCooldowns)
-                            Witch.witch.killTimer = PlayerControl.GameOptions.KillCooldown;
+                            Witch.witch.killTimer = GameOptionsManager.Instance.currentGameOptions.GetFloat(FloatOptionNames.KillCooldown);
                     }
                     else
                     {

@@ -10,6 +10,8 @@ using static TheOtherRoles.GameHistory;
 using TheOtherRoles.Modules;
 using Hazel;
 using TheOtherRoles.Patches;
+using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 
 namespace TheOtherRoles {
 
@@ -135,21 +137,22 @@ namespace TheOtherRoles {
 
         public static void setSkinWithAnim(PlayerPhysics playerPhysics, string SkinId, int ColorId)
         {
-            SkinViewData nextSkin = HatManager.Instance.GetSkinById(SkinId).viewData.viewData;
+            SkinData nextSkin = DestroyableSingleton<HatManager>.Instance.GetSkinById(SkinId);
             AnimationClip clip = null;
-            var spriteAnim = playerPhysics.Skin.animator;
+            var spriteAnim = playerPhysics.myPlayer.cosmetics.skin.animator;
             var anim = spriteAnim.m_animator;
+            var skinLayer = playerPhysics.myPlayer.cosmetics.skin;
 
-            var currentPhysicsAnim = playerPhysics.Animator.GetCurrentAnimation();
-            if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.RunAnim) clip = nextSkin.RunAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.SpawnAnim) clip = nextSkin.SpawnAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.EnterVentAnim) clip = nextSkin.EnterVentAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.ExitVentAnim) clip = nextSkin.ExitVentAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.IdleAnim) clip = nextSkin.IdleAnim;
-            else clip = nextSkin.IdleAnim;
+            var currentPhysicsAnim = playerPhysics.Animations.Animator.GetCurrentAnimation();
+            if (currentPhysicsAnim == playerPhysics.Animations.group.RunAnim) clip = nextSkin.viewData.viewData.RunAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.SpawnAnim) clip = nextSkin.viewData.viewData.SpawnAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.EnterVentAnim) clip = nextSkin.viewData.viewData.EnterVentAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.ExitVentAnim) clip = nextSkin.viewData.viewData.ExitVentAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.IdleAnim) clip = nextSkin.viewData.viewData.IdleAnim;
+            else clip = nextSkin.viewData.viewData.IdleAnim;
 
-            float progress = playerPhysics.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
-            playerPhysics.myPlayer.RawSetSkin(SkinId, ColorId);
+            float progress = playerPhysics.Animations.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            skinLayer.skin = nextSkin.viewData.viewData;
 
             spriteAnim.Play(clip, 1f);
             anim.Play("a", 0, progress % 1);
@@ -406,7 +409,7 @@ namespace TheOtherRoles {
             float alpha = value ? 0.25f : 1f;
             foreach (SpriteRenderer r in player.gameObject.GetComponentsInChildren<SpriteRenderer>())
                 r.color = new Color(r.color.r, r.color.g, r.color.b, alpha);
-            player.NameText.color = new Color(player.NameText.color.r, player.NameText.color.g, player.NameText.color.b, alpha);
+            player.cosmetics.nameText.color = new Color(player.cosmetics.nameText.color.r, player.cosmetics.nameText.color.g, player.cosmetics.nameText.color.b, alpha);
         }
 
         public static string GetString(this TranslationController t, StringNames key, params Il2CppSystem.Object[] parts) {
@@ -475,33 +478,37 @@ namespace TheOtherRoles {
 
         public static void setLook(this PlayerControl target, String playerName, int colorId, string hatId, string visorId, string skinId, string petId) {
             target.RawSetColor(colorId);
-            target.RawSetVisor(visorId);
+            target.RawSetVisor(visorId, colorId);
             target.RawSetHat(hatId, colorId);
             target.RawSetName(hidePlayerName(PlayerControl.LocalPlayer, target) ? "" : playerName);
 
             SkinViewData nextSkin = DestroyableSingleton<HatManager>.Instance.GetSkinById(skinId).viewData.viewData;
             PlayerPhysics playerPhysics = target.MyPhysics;
             AnimationClip clip = null;
-            var spriteAnim = playerPhysics.Skin.animator;
-            var currentPhysicsAnim = playerPhysics.Animator.GetCurrentAnimation();
-            if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.RunAnim) clip = nextSkin.RunAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.SpawnAnim) clip = nextSkin.SpawnAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.EnterVentAnim) clip = nextSkin.EnterVentAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.ExitVentAnim) clip = nextSkin.ExitVentAnim;
-            else if (currentPhysicsAnim == playerPhysics.CurrentAnimationGroup.IdleAnim) clip = nextSkin.IdleAnim;
+            var spriteAnim = playerPhysics.myPlayer.cosmetics.skin.animator;
+            var currentPhysicsAnim = playerPhysics.Animations.Animator.GetCurrentAnimation();
+
+
+            if (currentPhysicsAnim == playerPhysics.Animations.group.RunAnim) clip = nextSkin.RunAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.SpawnAnim) clip = nextSkin.SpawnAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.EnterVentAnim) clip = nextSkin.EnterVentAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.ExitVentAnim) clip = nextSkin.ExitVentAnim;
+            else if (currentPhysicsAnim == playerPhysics.Animations.group.IdleAnim) clip = nextSkin.IdleAnim;
             else clip = nextSkin.IdleAnim;
-            float progress = playerPhysics.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
-            playerPhysics.Skin.skin = nextSkin;
+            float progress = playerPhysics.Animations.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            playerPhysics.myPlayer.cosmetics.skin.skin = nextSkin;
+            playerPhysics.myPlayer.cosmetics.skin.UpdateMaterial();
+
             spriteAnim.Play(clip, 1f);
             spriteAnim.m_animator.Play("a", 0, progress % 1);
             spriteAnim.m_animator.Update(0f);
 
-            if (target.CurrentPet) UnityEngine.Object.Destroy(target.CurrentPet.gameObject);
-            target.CurrentPet = UnityEngine.Object.Instantiate<PetBehaviour>(DestroyableSingleton<HatManager>.Instance.GetPetById(petId).viewData.viewData);
-            target.CurrentPet.transform.position = target.transform.position;
-            target.CurrentPet.Source = target;
-            target.CurrentPet.Visible = target.Visible;
-            PlayerControl.SetPlayerMaterialColors(colorId, target.CurrentPet.rend);
+            if (target.cosmetics.currentPet) UnityEngine.Object.Destroy(target.cosmetics.currentPet.gameObject);
+            target.cosmetics.currentPet = UnityEngine.Object.Instantiate<PetBehaviour>(DestroyableSingleton<HatManager>.Instance.GetPetById(petId).viewData.viewData);
+            target.cosmetics.currentPet.transform.position = target.transform.position;
+            target.cosmetics.currentPet.Source = target;
+            target.cosmetics.currentPet.Visible = target.Visible;
+            target.SetPlayerMaterialColors(target.cosmetics.currentPet.rend);
         }
 
         public static void showFlash(Color color, float duration = 1f)

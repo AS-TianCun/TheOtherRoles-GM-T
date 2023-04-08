@@ -3,9 +3,6 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Collections;
-using static TheOtherRoles.TheOtherRoles;
-using static TheOtherRoles.TheOtherRolesGM;
 
 namespace TheOtherRoles {
     [Harmony]
@@ -63,7 +60,7 @@ namespace TheOtherRoles {
                 infoUnderlay.enabled = false;
             }
 
-            if (infoOverlayRules == null)
+/*             if (infoOverlayRules == null)
             {
                 infoOverlayRules = UnityEngine.Object.Instantiate(hudManager.TaskText, hudManager.transform);
                 infoOverlayRules.fontSize = infoOverlayRules.fontSizeMin = infoOverlayRules.fontSizeMax = 1.15f;
@@ -75,7 +72,7 @@ namespace TheOtherRoles {
                 infoOverlayRules.transform.localScale = Vector3.one;
                 infoOverlayRules.color = Palette.White;
                 infoOverlayRules.enabled = false;
-            }
+            } */
 
             if (infoOverlayRoles == null) { 
                 infoOverlayRoles = UnityEngine.Object.Instantiate(infoOverlayRules, hudManager.transform);
@@ -149,11 +146,11 @@ namespace TheOtherRoles {
             infoUnderlay.transform.localScale = new Vector3(7.5f, 5f, 1f);
             infoUnderlay.enabled = true;
 
-            TheOtherRolesPlugin.optionsPage = 0;
+/*             TheOtherRolesPlugin.optionsPage = 0;
             GameOptionsData o = PlayerControl.GameOptions;
             List<string> gameOptions = o.ToString().Split("\n", StringSplitOptions.RemoveEmptyEntries).ToList().GetRange(2, 17);
             infoOverlayRules.text = string.Join("\n", gameOptions) + "\n\n" + GameOptionsDataPatch.optionsToString(CustomOptionHolder.specialOptions);
-            infoOverlayRules.enabled = true;
+            infoOverlayRules.enabled = true; */
 
             string rolesText = "";
             foreach (RoleInfo r in RoleInfo.getRoleInfoForPlayer(PlayerControl.LocalPlayer))
